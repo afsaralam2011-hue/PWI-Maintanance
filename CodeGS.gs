@@ -7,7 +7,7 @@ function doGet(e) {
 
   var template = HtmlService.createTemplateFromFile('WelcomePage');
   var html = template.evaluate()
-    .setTitle('CMMS - Welcome')
+    .setTitle('Pakistan Wire Industries')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   Logger.log('doGet() completed, HTML length: ' + html.getContent().length);

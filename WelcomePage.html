@@ -1,36 +1,96 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="dark">
 <head>
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="?img=logo">
   <link rel="apple-touch-icon" href="?img=logo">
-  <title>CMMS - Welcome</title>
+  <title>Pakistan Wire Industries</title>
   <style>
+    :root, [data-theme="dark"] {
+      --ws-bg: #03050a;
+      --ws-bg-grad: linear-gradient(170deg, #020308 0%, #0a0e1a 30%, #05070f 70%, #03050a 100%);
+      --ws-card: rgba(8,12,28,0.50);
+      --ws-card-border: rgba(255,255,255,0.05);
+      --ws-card-shadow: 0 0 120px rgba(25,55,109,0.12), 0 0 60px rgba(99,102,241,0.05), 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+      --ws-text: #eef0f6;
+      --ws-text-grad: linear-gradient(135deg, #eef0f6 0%, #3b82f6 50%, #6366f1 100%);
+      --ws-text-sec: #9498b8;
+      --ws-text-muted: #5c6085;
+      --ws-accent: #3b82f6;
+      --ws-accent2: #6366f1;
+      --ws-accent3: #06b6d4;
+      --ws-warm: #f97316;
+      --ws-overlay: radial-gradient(ellipse at center, rgba(3,5,10,0.10) 0%, rgba(3,5,10,0.70) 100%);
+      --ws-grid-color: rgba(59,130,246,0.03);
+      --ws-factory-color1: rgba(59,130,246,0.06);
+      --ws-factory-color2: rgba(25,55,109,0.05);
+      --ws-particle: rgba(59,130,246,0.25);
+      --ws-watermark: rgba(255,255,255,0.04);
+      --ws-thm-bg: rgba(255,255,255,0.05);
+      --ws-thm-border: rgba(255,255,255,0.08);
+      --ws-thm-color: #9498b8;
+      --ws-thm-hover-bg: rgba(255,255,255,0.10);
+      --ws-thm-hover: #eef0f6;
+      --ws-input-bg: rgba(255,255,255,0.03);
+    }
+
+    [data-theme="light"] {
+      --ws-bg: #eef1f6;
+      --ws-bg-grad: linear-gradient(170deg, #e8ecf4 0%, #f0f2f5 30%, #e8ecf4 70%, #f0f2f5 100%);
+      --ws-card: rgba(255,255,255,0.75);
+      --ws-card-border: rgba(0,0,0,0.06);
+      --ws-card-shadow: 0 0 120px rgba(25,55,109,0.06), 0 0 60px rgba(99,102,241,0.03), 0 40px 80px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.80);
+      --ws-text: #1a1d2e;
+      --ws-text-grad: linear-gradient(135deg, #1a1d2e 0%, #2563eb 50%, #4f46e5 100%);
+      --ws-text-sec: #4a4e6a;
+      --ws-text-muted: #8b8fa8;
+      --ws-accent: #2563eb;
+      --ws-accent2: #4f46e5;
+      --ws-accent3: #0891b2;
+      --ws-warm: #ea580c;
+      --ws-overlay: radial-gradient(ellipse at center, rgba(238,241,246,0.10) 0%, rgba(238,241,246,0.50) 100%);
+      --ws-grid-color: rgba(59,130,246,0.04);
+      --ws-factory-color1: rgba(59,130,246,0.04);
+      --ws-factory-color2: rgba(25,55,109,0.03);
+      --ws-particle: rgba(59,130,246,0.18);
+      --ws-watermark: rgba(0,0,0,0.03);
+      --ws-thm-bg: rgba(0,0,0,0.04);
+      --ws-thm-border: rgba(0,0,0,0.08);
+      --ws-thm-color: #4a4e6a;
+      --ws-thm-hover-bg: rgba(0,0,0,0.08);
+      --ws-thm-hover: #1a1d2e;
+      --ws-input-bg: rgba(0,0,0,0.02);
+    }
+
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #03050a;
-      color: #eef0f6;
+      background: var(--ws-bg);
+      color: var(--ws-text);
     }
 
-    .ws-bg {
+    .ws-bg-base {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-      background:
-        radial-gradient(ellipse at 20% 40%, rgba(25,55,109,0.50) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 60%, rgba(99,102,241,0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 20%, rgba(6,182,212,0.08) 0%, transparent 40%),
-        linear-gradient(170deg, #020308 0%, #0a0e1a 30%, #05070f 70%, #03050a 100%);
+      background: var(--ws-bg-grad);
     }
 
-    .ws-bg::after {
+    .ws-bg-base::after {
       content: '';
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background:
-        radial-gradient(circle at 30% 50%, rgba(59,130,246,0.04) 0%, transparent 40%),
-        radial-gradient(circle at 70% 30%, rgba(99,102,241,0.03) 0%, transparent 40%);
+        radial-gradient(ellipse at 20% 40%, rgba(25,55,109,0.50) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 60%, rgba(99,102,241,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 20%, rgba(6,182,212,0.08) 0%, transparent 40%);
       animation: wsBgPulse 8s ease-in-out infinite alternate;
+    }
+
+    [data-theme="light"] .ws-bg-base::after {
+      background:
+        radial-gradient(ellipse at 20% 40%, rgba(59,130,246,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 60%, rgba(99,102,241,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 20%, rgba(6,182,212,0.03) 0%, transparent 40%);
     }
 
     @keyframes wsBgPulse {
@@ -38,77 +98,92 @@
       100% { opacity: 1; }
     }
 
-    .ws-grid {
+    .ws-bg-drift {
+      position: fixed; top: -50%; left: -50%; width: 200%; height: 200%; z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 30% 40%, rgba(59,130,246,0.10) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(99,102,241,0.06) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 20%, rgba(6,182,212,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 80%, rgba(249,115,22,0.03) 0%, transparent 40%);
+      animation: wsDrift 30s ease-in-out infinite alternate;
+    }
+
+    [data-theme="light"] .ws-bg-drift {
+      background:
+        radial-gradient(ellipse at 30% 40%, rgba(59,130,246,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(99,102,241,0.03) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 20%, rgba(6,182,212,0.02) 0%, transparent 50%),
+        radial-gradient(ellipse at 20% 80%, rgba(249,115,22,0.015) 0%, transparent 40%);
+    }
+
+    @keyframes wsDrift {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(-4%, 3%) rotate(0.5deg); }
+      50% { transform: translate(3%, -2%) rotate(-0.3deg); }
+      75% { transform: translate(-2%, 4%) rotate(0.4deg); }
+      100% { transform: translate(3%, -3%) rotate(-0.2deg); }
+    }
+
+    .ws-bg-grid {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
       background-image:
-        linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+        linear-gradient(var(--ws-grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--ws-grid-color) 1px, transparent 1px);
       background-size: 60px 60px;
       mask-image: radial-gradient(ellipse at center, #000 25%, transparent 70%);
       -webkit-mask-image: radial-gradient(ellipse at center, #000 25%, transparent 70%);
     }
 
-    .ws-factory {
+    .ws-bg-factory {
       position: fixed; bottom: 0; left: 0; width: 100%; height: 45%; z-index: 1;
       background:
-        linear-gradient(0deg, #03050a 8%, transparent 60%),
-        repeating-linear-gradient(
-          90deg,
-          rgba(59,130,246,0.06) 0px, rgba(59,130,246,0.06) 3px,
-          transparent 3px, transparent 18px,
-          rgba(25,55,109,0.05) 18px, rgba(25,55,109,0.05) 21px,
-          transparent 21px, transparent 36px
-        );
+        linear-gradient(0deg, var(--ws-bg) 8%, transparent 60%),
+        repeating-linear-gradient(90deg, var(--ws-factory-color1) 0px, var(--ws-factory-color1) 3px, transparent 3px, transparent 18px, var(--ws-factory-color2) 18px, var(--ws-factory-color2) 21px, transparent 21px, transparent 36px);
       mask-image: linear-gradient(0deg, #000 10%, transparent 80%);
       -webkit-mask-image: linear-gradient(0deg, #000 10%, transparent 80%);
     }
 
-    .ws-factory::before {
+    .ws-bg-factory::before {
       content: '';
       position: absolute; top: 15%; left: 0; width: 100%; height: 40%;
-      background: repeating-linear-gradient(
-        90deg,
-        transparent 0px, transparent 60px,
-        rgba(59,130,246,0.04) 60px, rgba(59,130,246,0.04) 64px,
-        transparent 64px, transparent 100px,
-        rgba(99,102,241,0.03) 100px, rgba(99,102,241,0.03) 103px,
-        transparent 103px, transparent 140px
-      );
+      background: repeating-linear-gradient(90deg, transparent 0px, transparent 60px, var(--ws-factory-color1) 60px, var(--ws-factory-color1) 64px, transparent 64px, transparent 100px, var(--ws-factory-color2) 100px, var(--ws-factory-color2) 103px, transparent 103px, transparent 140px);
     }
 
-    .ws-factory::after {
+    .ws-bg-factory::after {
       content: '';
       position: absolute; top: 25%; left: 8%; width: 84%; height: 1px;
-      background: repeating-linear-gradient(
-        90deg,
-        rgba(59,130,246,0.08) 0px, rgba(59,130,246,0.08) 50px,
-        transparent 50px, transparent 100px
-      );
+      background: repeating-linear-gradient(90deg, var(--ws-factory-color1) 0px, var(--ws-factory-color1) 50px, transparent 50px, transparent 100px);
     }
 
-    .ws-floating {
+    .ws-particles {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
       pointer-events: none; overflow: hidden;
     }
 
-    .ws-floating span {
+    .ws-particles span {
       position: absolute;
       width: 4px; height: 4px;
-      background: rgba(59,130,246,0.25);
+      background: var(--ws-particle);
       border-radius: 50%;
       animation: wsFloat linear infinite;
     }
 
-    .ws-floating span:nth-child(1) { left: 10%; top: 20%; width: 3px; height: 3px; animation-duration: 18s; animation-delay: 0s; }
-    .ws-floating span:nth-child(2) { left: 25%; top: 60%; width: 5px; height: 5px; animation-duration: 22s; animation-delay: 2s; background: rgba(99,102,241,0.20); }
-    .ws-floating span:nth-child(3) { left: 45%; top: 15%; width: 3px; height: 3px; animation-duration: 16s; animation-delay: 4s; }
-    .ws-floating span:nth-child(4) { left: 65%; top: 70%; width: 4px; height: 4px; animation-duration: 20s; animation-delay: 1s; background: rgba(6,182,212,0.20); }
-    .ws-floating span:nth-child(5) { left: 80%; top: 30%; width: 3px; height: 3px; animation-duration: 24s; animation-delay: 3s; }
-    .ws-floating span:nth-child(6) { left: 50%; top: 80%; width: 5px; height: 5px; animation-duration: 19s; animation-delay: 5s; background: rgba(59,130,246,0.15); }
-    .ws-floating span:nth-child(7) { left: 15%; top: 85%; width: 3px; height: 3px; animation-duration: 21s; animation-delay: 7s; }
-    .ws-floating span:nth-child(8) { left: 90%; top: 50%; width: 4px; height: 4px; animation-duration: 17s; animation-delay: 2s; background: rgba(99,102,241,0.15); }
-    .ws-floating span:nth-child(9) { left: 35%; top: 40%; width: 3px; height: 3px; animation-duration: 23s; animation-delay: 6s; }
-    .ws-floating span:nth-child(10) { left: 70%; top: 10%; width: 5px; height: 5px; animation-duration: 15s; animation-delay: 4s; background: rgba(6,182,212,0.15); }
+    .ws-particles span:nth-child(1) { left: 8%; top: 25%; width: 3px; height: 3px; animation-duration: 20s; animation-delay: 0s; }
+    .ws-particles span:nth-child(2) { left: 22%; top: 65%; width: 5px; height: 5px; animation-duration: 24s; animation-delay: 2s; background: rgba(99,102,241,0.20); }
+    .ws-particles span:nth-child(3) { left: 40%; top: 15%; width: 3px; height: 3px; animation-duration: 18s; animation-delay: 4s; }
+    .ws-particles span:nth-child(4) { left: 58%; top: 75%; width: 4px; height: 4px; animation-duration: 22s; animation-delay: 1s; background: rgba(6,182,212,0.20); }
+    .ws-particles span:nth-child(5) { left: 75%; top: 35%; width: 3px; height: 3px; animation-duration: 26s; animation-delay: 3s; }
+    .ws-particles span:nth-child(6) { left: 15%; top: 80%; width: 5px; height: 5px; animation-duration: 19s; animation-delay: 5s; background: rgba(59,130,246,0.15); }
+    .ws-particles span:nth-child(7) { left: 88%; top: 55%; width: 3px; height: 3px; animation-duration: 23s; animation-delay: 7s; }
+    .ws-particles span:nth-child(8) { left: 32%; top: 45%; width: 4px; height: 4px; animation-duration: 21s; animation-delay: 2s; background: rgba(99,102,241,0.15); }
+    .ws-particles span:nth-child(9) { left: 62%; top: 20%; width: 3px; height: 3px; animation-duration: 25s; animation-delay: 6s; }
+    .ws-particles span:nth-child(10) { left: 48%; top: 88%; width: 5px; height: 5px; animation-duration: 17s; animation-delay: 4s; background: rgba(6,182,212,0.15); }
+    .ws-particles span:nth-child(11) { left: 5%; top: 50%; width: 3px; height: 3px; animation-duration: 28s; animation-delay: 8s; }
+    .ws-particles span:nth-child(12) { left: 92%; top: 15%; width: 4px; height: 4px; animation-duration: 20s; animation-delay: 3s; }
+    .ws-particles span:nth-child(13) { left: 70%; top: 60%; width: 3px; height: 3px; animation-duration: 22s; animation-delay: 1s; background: rgba(59,130,246,0.12); }
+    .ws-particles span:nth-child(14) { left: 28%; top: 30%; width: 4px; height: 4px; animation-duration: 26s; animation-delay: 5s; }
+    .ws-particles span:nth-child(15) { left: 82%; top: 82%; width: 3px; height: 3px; animation-duration: 19s; animation-delay: 7s; background: rgba(99,102,241,0.12); }
 
     @keyframes wsFloat {
       0% { transform: translateY(0) translateX(0); opacity: 0; }
@@ -117,19 +192,49 @@
       100% { transform: translateY(-100vh) translateX(80px); opacity: 0; }
     }
 
-    .ws-glow-line {
+    .ws-sparks {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+      pointer-events: none; overflow: hidden;
+    }
+
+    .ws-sparks span {
+      position: absolute;
+      width: 2px; height: 2px;
+      background: #f59e0b;
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(245,158,11,0.6), 0 0 12px rgba(245,158,11,0.3);
+      animation: wsSpark linear infinite;
+    }
+
+    .ws-sparks span:nth-child(1) { left: 18%; top: 62%; animation-duration: 2.8s; animation-delay: 0s; }
+    .ws-sparks span:nth-child(2) { left: 42%; top: 48%; animation-duration: 3.2s; animation-delay: 1.2s; }
+    .ws-sparks span:nth-child(3) { left: 68%; top: 56%; animation-duration: 2.5s; animation-delay: 0.5s; }
+    .ws-sparks span:nth-child(4) { left: 32%; top: 72%; animation-duration: 3.5s; animation-delay: 2.0s; }
+    .ws-sparks span:nth-child(5) { left: 82%; top: 42%; animation-duration: 2.6s; animation-delay: 1.5s; }
+    .ws-sparks span:nth-child(6) { left: 55%; top: 78%; animation-duration: 3.0s; animation-delay: 0.8s; }
+    .ws-sparks span:nth-child(7) { left: 12%; top: 38%; animation-duration: 3.3s; animation-delay: 2.5s; }
+    .ws-sparks span:nth-child(8) { left: 75%; top: 28%; animation-duration: 2.7s; animation-delay: 1.8s; }
+
+    @keyframes wsSpark {
+      0% { opacity: 0; transform: scale(0) translateY(0); }
+      15% { opacity: 1; transform: scale(1.5) translateY(-4px); }
+      40% { opacity: 0.8; transform: scale(1) translateY(-12px); }
+      100% { opacity: 0; transform: scale(0) translateY(-40px); }
+    }
+
+    .ws-glow-lines {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
       pointer-events: none;
     }
 
-    .ws-glow-line::before {
+    .ws-glow-lines::before {
       content: '';
       position: absolute; top: 35%; left: -20%; width: 140%; height: 1px;
       background: linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.10) 20%, rgba(99,102,241,0.15) 50%, rgba(59,130,246,0.10) 80%, transparent 100%);
       animation: wsGlowSweep 6s ease-in-out infinite;
     }
 
-    .ws-glow-line::after {
+    .ws-glow-lines::after {
       content: '';
       position: absolute; top: 55%; left: -20%; width: 140%; height: 1px;
       background: linear-gradient(90deg, transparent 0%, rgba(6,182,212,0.06) 20%, rgba(99,102,241,0.10) 50%, rgba(6,182,212,0.06) 80%, transparent 100%);
@@ -144,7 +249,48 @@
 
     .ws-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
-      background: radial-gradient(ellipse at center, rgba(3,5,10,0.10) 0%, rgba(3,5,10,0.70) 100%);
+      background: var(--ws-overlay);
+    }
+
+    .ws-watermark {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotate(-12deg);
+      font-size: clamp(20px, 4.5vw, 52px);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      white-space: nowrap;
+      color: var(--ws-watermark);
+      z-index: 1;
+      pointer-events: none;
+      user-select: none;
+      text-transform: uppercase;
+    }
+
+    .ws-theme-toggle {
+      position: fixed; top: 20px; right: 20px; z-index: 10;
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      background: var(--ws-thm-bg);
+      border: 1px solid var(--ws-thm-border);
+      color: var(--ws-thm-color);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .ws-theme-toggle:hover {
+      background: var(--ws-thm-hover-bg);
+      color: var(--ws-thm-hover);
+      transform: scale(1.05);
+    }
+
+    .ws-theme-toggle svg {
+      width: 18px; height: 18px;
+      fill: none; stroke: currentColor; stroke-width: 2;
+      stroke-linecap: round; stroke-linejoin: round;
     }
 
     .ws-wrapper {
@@ -154,19 +300,15 @@
     }
 
     .ws-card {
-      background: rgba(8,12,28,0.50);
+      background: var(--ws-card);
       backdrop-filter: blur(32px) saturate(1.6);
       -webkit-backdrop-filter: blur(32px) saturate(1.6);
-      border: 1px solid rgba(255,255,255,0.05);
+      border: 1px solid var(--ws-card-border);
       border-radius: 28px;
-      padding: 52px 60px;
-      max-width: 500px; width: 100%;
+      padding: 48px 52px;
+      max-width: 540px; width: 100%;
       text-align: center;
-      box-shadow:
-        0 0 120px rgba(25,55,109,0.12),
-        0 0 60px rgba(99,102,241,0.05),
-        0 40px 80px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.04);
+      box-shadow: var(--ws-card-shadow);
       animation: ws-in 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
       position: relative;
       overflow: hidden;
@@ -178,15 +320,19 @@
       background: linear-gradient(90deg, transparent, rgba(59,130,246,0.30), transparent);
     }
 
+    [data-theme="light"] .ws-card::before {
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.15), transparent);
+    }
+
     @keyframes ws-in {
       0% { opacity: 0; transform: translateY(30px) scale(0.95); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .ws-logo-area {
-      width: 130px; height: 130px;
-      margin: 0 auto 20px;
-      border-radius: 24px;
+      width: 110px; height: 110px;
+      margin: 0 auto 22px;
+      border-radius: 22px;
       background: rgba(25,55,109,0.20);
       border: 1px solid rgba(59,130,246,0.10);
       display: flex; align-items: center; justify-content: center;
@@ -194,10 +340,15 @@
       opacity: 0; animation: wsLogoIn 1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards;
     }
 
+    [data-theme="light"] .ws-logo-area {
+      background: rgba(59,130,246,0.06);
+      border-color: rgba(59,130,246,0.12);
+    }
+
     .ws-logo-area::after {
       content: '';
       position: absolute; inset: 0;
-      border-radius: 24px;
+      border-radius: 22px;
       background: radial-gradient(circle at 30% 30%, rgba(59,130,246,0.10), transparent 60%);
       pointer-events: none;
     }
@@ -210,7 +361,7 @@
     .ws-logo-area .logo-img {
       width: 100%; height: 100%;
       object-fit: contain;
-      padding: 18px;
+      padding: 16px;
       position: relative; z-index: 1;
     }
 
@@ -224,17 +375,17 @@
     }
 
     .ws-logo-area .logo-fallback .logo-icon {
-      width: 56px; height: 56px;
-      color: #3b82f6;
+      width: 48px; height: 48px;
+      color: var(--ws-accent);
       filter: drop-shadow(0 0 20px rgba(59,130,246,0.25));
       animation: ws-glow 4s ease-in-out infinite;
     }
 
     .ws-logo-area .logo-fallback .logo-letter {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 800;
       letter-spacing: 0.3em;
-      color: #3b82f6;
+      color: var(--ws-accent);
       opacity: 0.6;
     }
 
@@ -256,74 +407,25 @@
       50% { transform: scale(1.03); opacity: 0.6; }
     }
 
-    .ws-company {
-      font-size: 20px; font-weight: 700;
-      background: linear-gradient(135deg, #eef0f6 0%, #c4c8e0 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: 0.02em;
-      margin-bottom: 6px;
-      line-height: 1.3;
-      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
-    }
-
-    .ws-division-container {
-      display: flex; align-items: center; justify-content: center;
-      gap: 12px; margin-top: 2px;
-      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.7s forwards;
-    }
-
-    .ws-division {
-      font-size: 11px;
-      color: #9498b8;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-    }
-
-    .ws-division-sep {
-      width: 3px; height: 3px;
-      background: #3b82f6;
-      border-radius: 50%;
-      opacity: 0.5;
-    }
-
-    .ws-title {
-      font-size: 10px;
-      color: #5c6085;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-top: 14px;
-      margin-bottom: 22px;
-      font-weight: 500;
-      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.9s forwards;
-    }
-
-    .ws-sep {
-      width: 60px; height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.50), transparent);
-      margin: 0 auto 20px;
-      border-radius: 2px;
-      opacity: 0; animation: ws-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.05s forwards;
-    }
-
     .ws-welcome {
-      font-size: 40px; font-weight: 800;
-      background: linear-gradient(135deg, #eef0f6 0%, #3b82f6 50%, #6366f1 100%);
+      font-size: 42px; font-weight: 800;
+      background: var(--ws-text-grad);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 6px;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.02em;
       line-height: 1.1;
-      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 1.2s forwards;
+      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.4s forwards;
     }
 
-    .ws-version {
-      font-size: 11px;
-      color: rgba(59,130,246,0.70);
+    .ws-subtitle {
+      font-size: 13px;
+      color: var(--ws-text-muted);
       letter-spacing: 0.06em;
       font-weight: 500;
-      margin-bottom: 28px;
-      opacity: 0; animation: ws-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.35s forwards;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards;
     }
 
     @keyframes ws-up {
@@ -331,12 +433,150 @@
       100% { opacity: 1; transform: translateY(0); }
     }
 
+    .ws-divisions {
+      display: flex; gap: 14px;
+      margin-bottom: 22px;
+      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.8s forwards;
+    }
+
+    .ws-div-card {
+      flex: 1;
+      padding: 20px 14px;
+      border-radius: 16px;
+      text-align: center;
+      cursor: default;
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ws-div-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 16px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .ws-div-card:hover::before { opacity: 1; }
+
+    .ws-div-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .ws-div-blue {
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.15);
+    }
+
+    .ws-div-blue::before {
+      background: linear-gradient(135deg, rgba(59,130,246,0.06), transparent);
+    }
+
+    .ws-div-blue:hover {
+      box-shadow: 0 8px 30px rgba(59,130,246,0.12), 0 0 20px rgba(59,130,246,0.06);
+      border-color: rgba(59,130,246,0.25);
+    }
+
+    .ws-div-orange {
+      background: rgba(249,115,22,0.08);
+      border: 1px solid rgba(249,115,22,0.15);
+    }
+
+    .ws-div-orange::before {
+      background: linear-gradient(135deg, rgba(249,115,22,0.06), transparent);
+    }
+
+    .ws-div-orange:hover {
+      box-shadow: 0 8px 30px rgba(249,115,22,0.12), 0 0 20px rgba(249,115,22,0.06);
+      border-color: rgba(249,115,22,0.25);
+    }
+
+    [data-theme="light"] .ws-div-blue {
+      background: rgba(59,130,246,0.05);
+      border-color: rgba(59,130,246,0.12);
+    }
+
+    [data-theme="light"] .ws-div-orange {
+      background: rgba(249,115,22,0.05);
+      border-color: rgba(249,115,22,0.12);
+    }
+
+    .ws-div-icon {
+      margin-bottom: 10px;
+    }
+
+    .ws-div-icon svg {
+      width: 32px; height: 32px;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .ws-div-blue .ws-div-icon svg { stroke: #3b82f6; }
+    .ws-div-orange .ws-div-icon svg { stroke: #f97316; }
+
+    .ws-div-name {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      margin-bottom: 3px;
+    }
+
+    .ws-div-blue .ws-div-name { color: #60a5fa; }
+    .ws-div-orange .ws-div-name { color: #fb923c; }
+
+    [data-theme="light"] .ws-div-blue .ws-div-name { color: #2563eb; }
+    [data-theme="light"] .ws-div-orange .ws-div-name { color: #ea580c; }
+
+    .ws-div-desc {
+      font-size: 10px;
+      color: var(--ws-text-muted);
+      letter-spacing: 0.03em;
+      font-weight: 500;
+    }
+
+    .ws-company {
+      font-size: 14px; font-weight: 600;
+      color: var(--ws-text-sec);
+      letter-spacing: 0.02em;
+      margin-bottom: 4px;
+      line-height: 1.3;
+      opacity: 0; animation: ws-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 1.0s forwards;
+    }
+
+    .ws-version {
+      font-size: 10px;
+      color: rgba(59,130,246,0.60);
+      letter-spacing: 0.08em;
+      font-weight: 500;
+      margin-bottom: 22px;
+      opacity: 0; animation: ws-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.1s forwards;
+    }
+
+    [data-theme="light"] .ws-version {
+      color: rgba(37,99,235,0.50);
+    }
+
+    .ws-sep {
+      width: 50px; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(59,130,246,0.40), transparent);
+      margin: 0 auto 18px;
+      border-radius: 2px;
+      opacity: 0; animation: ws-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.15s forwards;
+    }
+
     .ws-progress {
       width: 100%; height: 3px;
       background: rgba(255,255,255,0.05);
       border-radius: 3px; overflow: hidden;
-      margin-bottom: 22px;
-      opacity: 0; animation: ws-fade 0.5s ease-out 1.6s forwards;
+      margin-bottom: 18px;
+      opacity: 0; animation: ws-fade 0.5s ease-out 1.3s forwards;
+    }
+
+    [data-theme="light"] .ws-progress {
+      background: rgba(0,0,0,0.06);
     }
 
     .ws-progress-bar {
@@ -358,21 +598,35 @@
       100% { opacity: 1; }
     }
 
+    .ws-loading-text {
+      font-size: 11px;
+      color: var(--ws-text-muted);
+      margin-bottom: 20px;
+      letter-spacing: 0.08em;
+      opacity: 0; animation: ws-fade 0.5s ease-out 1.3s forwards;
+    }
+
     .ws-btn {
       display: inline-flex; align-items: center; gap: 10px;
-      padding: 16px 44px;
+      padding: 16px 48px;
       background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(99,102,241,0.08));
       color: #60a5fa;
-      border: 1px solid rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.15);
       border-radius: 16px;
       font-size: 14px; font-weight: 700;
       letter-spacing: 0.06em;
       cursor: pointer;
       transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-      opacity: 0; animation: ws-fade 0.6s ease-out 1.9s forwards;
+      opacity: 0; animation: ws-fade 0.6s ease-out 1.5s forwards;
       font-family: inherit;
       position: relative;
       overflow: hidden;
+    }
+
+    [data-theme="light"] .ws-btn {
+      background: linear-gradient(135deg, rgba(37,99,235,0.10), rgba(79,70,229,0.06));
+      color: #2563eb;
+      border-color: rgba(37,99,235,0.15);
     }
 
     .ws-btn::before {
@@ -390,6 +644,11 @@
       transform: translateY(-2px);
       box-shadow: 0 12px 40px rgba(59,130,246,0.12), 0 0 30px rgba(59,130,246,0.06);
       color: #93bbfb;
+    }
+
+    [data-theme="light"] .ws-btn:hover {
+      color: #1d4ed8;
+      box-shadow: 0 12px 40px rgba(37,99,235,0.10), 0 0 30px rgba(37,99,235,0.04);
     }
 
     .ws-btn:disabled {
@@ -429,36 +688,37 @@
       background: rgba(239,68,68,0.18);
     }
 
-    .ws-loading-text {
-      font-size: 11px;
-      color: #5c6085;
-      margin-bottom: 14px;
-      letter-spacing: 0.08em;
-      opacity: 0; animation: ws-fade 0.5s ease-out 1.6s forwards;
-    }
-
     @media (max-width: 520px) {
       .ws-card { padding: 36px 28px; border-radius: 22px; }
-      .ws-welcome { font-size: 30px; }
-      .ws-company { font-size: 16px; }
-      .ws-logo-area { width: 110px; height: 110px; }
-      .ws-logo-area .logo-fallback .logo-icon { width: 44px; height: 44px; }
+      .ws-welcome { font-size: 32px; }
+      .ws-logo-area { width: 90px; height: 90px; }
+      .ws-logo-area .logo-fallback .logo-icon { width: 38px; height: 38px; }
       .ws-btn { padding: 14px 32px; font-size: 13px; }
-      .ws-division-container { flex-direction: column; gap: 2px; }
-      .ws-division-sep { display: none; }
+      .ws-divisions { flex-direction: column; gap: 10px; }
+      .ws-theme-toggle { top: 12px; right: 12px; width: 36px; height: 36px; }
     }
   </style>
 </head>
 <body>
-  <div class="ws-bg"></div>
-  <div class="ws-grid"></div>
-  <div class="ws-factory"></div>
-  <div class="ws-floating">
+  <div class="ws-bg-base"></div>
+  <div class="ws-bg-drift"></div>
+  <div class="ws-bg-grid"></div>
+  <div class="ws-bg-factory"></div>
+  <div class="ws-particles">
+    <span></span><span></span><span></span><span></span><span></span>
     <span></span><span></span><span></span><span></span><span></span>
     <span></span><span></span><span></span><span></span><span></span>
   </div>
-  <div class="ws-glow-line"></div>
+  <div class="ws-sparks">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span>
+  </div>
+  <div class="ws-glow-lines"></div>
   <div class="ws-overlay"></div>
+  <div class="ws-watermark">Pakistan Wire Industries (Pvt.) Ltd.</div>
+  <button class="ws-theme-toggle" onclick="toggleTheme()" id="wsThemeBtn" title="Toggle theme">
+    <svg id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+  </button>
   <div class="ws-wrapper">
     <div class="ws-card">
       <div class="ws-logo-area" id="wsLogoArea">
@@ -474,16 +734,32 @@
           <span class="logo-letter">PWI</span>
         </div>
       </div>
-      <div class="ws-company">Pakistan Wire Industries (Pvt.) Ltd.</div>
-      <div class="ws-division-container">
-        <span class="ws-division">Spoke Division</span>
-        <span class="ws-division-sep"></span>
-        <span class="ws-division">Control Cable Division</span>
+      <div class="ws-welcome">WELCOME</div>
+      <div class="ws-subtitle">Maintenance Management System</div>
+      <div class="ws-divisions">
+        <div class="ws-div-card ws-div-blue">
+          <div class="ws-div-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+          </div>
+          <div class="ws-div-name">Spoke Division</div>
+          <div class="ws-div-desc">Manufacturing &amp; Production</div>
+        </div>
+        <div class="ws-div-card ws-div-orange">
+          <div class="ws-div-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </svg>
+          </div>
+          <div class="ws-div-name">Control Cable Division</div>
+          <div class="ws-div-desc">Cable &amp; Wire Production</div>
+        </div>
       </div>
-      <div class="ws-title">Computerized Maintenance Management System</div>
+      <div class="ws-company">Pakistan Wire Industries (Pvt.) Ltd.</div>
       <div class="ws-sep"></div>
-      <div class="ws-welcome">Welcome</div>
-      <div class="ws-version">Enterprise Edition 2026</div>
       <div class="ws-loading-text" id="wsLoadingText">Initializing system...</div>
       <div class="ws-progress">
         <div class="ws-progress-bar" id="wsProgressBar"></div>
@@ -499,6 +775,33 @@
     </div>
   </div>
   <script>
+    (function() {
+      var saved = localStorage.getItem('cmms_theme');
+      if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+      updateThemeIcon();
+    })();
+
+    function updateThemeIcon() {
+      var icon = document.getElementById('themeIcon');
+      if (!icon) return;
+      var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      icon.innerHTML = isLight
+        ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+        : '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+    }
+
+    function toggleTheme() {
+      var current = document.documentElement.getAttribute('data-theme') || 'dark';
+      var next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('cmms_theme', next);
+      updateThemeIcon();
+    }
+
     var wsTimer = null;
     var wsLoaded = false;
     var loadingTexts = ['Initializing system...', 'Loading modules...', 'Preparing interface...', 'Almost ready...'];
