@@ -175,27 +175,27 @@
   <div class="charts-grid">
     <div class="chart-card">
       <div class="card-title">Job Status Overview <span class="chart-badge" id="jobStatusBadge">Current</span></div>
-      <div id="chartJobStatus" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartJobStatus" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">Priority Distribution <span class="chart-badge" id="priorityBadge">Current</span></div>
-      <div id="chartPriority" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartPriority" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">MTTR Trend <span class="chart-badge" id="mttrBadge">6 Months</span></div>
-      <div id="chartMTTR" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartMTTR" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">MTBF Trend <span class="chart-badge" id="mtbfBadge">6 Months</span></div>
-      <div id="chartMTBF" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartMTBF" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">Monthly Jobs <span class="chart-badge" id="monthlyJobsBadge">6 Months</span></div>
-      <div id="chartMonthlyJobs" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartMonthlyJobs" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
     <div class="chart-card">
       <div class="card-title">Breakdown Trend <span class="chart-badge" id="breakdownBadge">6 Months</span></div>
-      <div id="chartBreakdown" style="min-height:240px;height:240px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
+      <div id="chartBreakdown" style="min-height:280px;height:280px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading chart...</div>
     </div>
   </div>
 </div>
@@ -318,96 +318,160 @@ function renderDashboardNotifications(items) {
 function doDrawCharts(data) {
   try {
     var c = data.charts || {};
-    var months = c.months || ['Jan','Feb','Mar','Apr','May','Jun'];
-    var op = c.openJobs || [0,0,0,0,0,0];
-    var rn = c.runningJobs || [0,0,0,0,0,0];
-    var cl = c.closedJobs || [0,0,0,0,0,0];
-    var pd = c.pendingJobs || [0,0,0,0,0,0];
-    var ap = c.approvedJobs || [0,0,0,0,0,0];
-    var bd = c.breakdowns || [0,0,0,0,0,0];
-    var mt = c.mttr || [null,null,null,null,null,null];
-    var mf = c.mtbf || [null,null,null,null,null,null];
+    var months = c.months || [];
+    var op = c.openJobs || [];
+    var rn = c.runningJobs || [];
+    var cl = c.closedJobs || [];
+    var pd = c.pendingJobs || [];
+    var ap = c.approvedJobs || [];
+    var bd = c.breakdowns || [];
+    var mt = c.mttr || [];
+    var mf = c.mtbf || [];
+    var totalStatus = data.totalStatusJobs || 1;
+    var totalPri = data.totalPriorityJobs || 1;
+    var animCfg = { startup: true, duration: 800, easing: 'out' };
+    var tooltipStyle = 'text-align:left;padding:10px 14px;font-size:13px;line-height:1.6;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.3);font-family:inherit;';
 
-    var hasMttr = data.mttr !== null && data.mttr !== undefined && data.mttr > 0;
-    var hasMtbf = data.mtbf !== null && data.mtbf !== undefined && data.mtbf > 0;
-
+    /* ============================================================
+       1. JOB STATUS OVERVIEW — Column Chart
+       Colors: Open=Blue, Running=Green, Closed=Gray, Pending=Orange, Approved=Purple
+       ============================================================ */
     var jobStatusDiv = document.getElementById('chartJobStatus');
     if (jobStatusDiv) {
-      var totalStatusJobs = (data.openJobs || 0) + (data.runningJobs || 0) + (data.closedJobs || 0);
-      if (totalStatusJobs === 0 && !data.pendingJobs && !data.approvedJobs) {
-        jobStatusDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px">No job status data available</div>';
+      var statusCounts = [
+        { name: 'Open', count: data.openJobs || 0, color: '#3B82F6' },
+        { name: 'Running', count: data.runningJobs || 0, color: '#22C55E' },
+        { name: 'Closed', count: data.closedJobs || 0, color: '#6B7280' },
+        { name: 'Pending', count: data.pendingJobs || 0, color: '#F97316' },
+        { name: 'Approved', count: data.approvedJobs || 0, color: '#A855F7' }
+      ];
+      var statusTotal = statusCounts.reduce(function(s, r) { return s + r.count; }, 0);
+      if (statusTotal === 0) {
+        jobStatusDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No job status data available</div>';
       } else {
         jobStatusDiv.innerHTML = '';
-        var jobStatusData = google.visualization.arrayToDataTable([
-          ['Status', 'Count'],
-          ['Open', data.openJobs || 0],
-          ['Running', data.runningJobs || 0],
-          ['Closed', data.closedJobs || 0],
-          ['Pending', data.pendingJobs || 0],
-          ['Approved', data.approvedJobs || 0]
-        ]);
+        var jobRows = [['Status', 'Count', { role: 'style' }, { role: 'tooltip', type: 'string', p: { html: true } }]];
+        statusCounts.forEach(function(r) {
+          var pct = statusTotal > 0 ? Math.round((r.count / statusTotal) * 100) : 0;
+          var tip = '<div style="' + tooltipStyle + '">' +
+            '<div style="font-weight:700;font-size:14px;margin-bottom:4px;color:' + r.color + '">' + r.name + '</div>' +
+            '<div>Jobs: <b>' + r.count + '</b></div>' +
+            '<div>Share: <b>' + pct + '%</b> of ' + statusTotal + ' total</div>' +
+            '</div>';
+          jobRows.push([r.name, r.count, r.color, tip]);
+        });
+        var jobData = new google.visualization.arrayToDataTable(jobRows);
         var jobOptions = {
           backgroundColor: 'transparent',
-          chartArea: { width: '80%', height: '70%' },
-          legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 10 } },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: '#1e2140' } },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: '#1e2140' }, minValue: 0 },
-          bar: { groupWidth: '65%' },
-          colors: ['#6366f1', '#06b6d4', '#22c55e', '#a855f7', '#f59e0b']
+          chartArea: { left: 40, right: 20, top: 20, bottom: 50, width: '90%', height: '65%' },
+          legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } },
+          hAxis: { textStyle: { color: '#9498b8', fontSize: 11 }, gridlines: { color: 'transparent' }, slantedText: false },
+          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          bar: { groupWidth: '60%' },
+          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          animation: animCfg,
+          enableInteractivity: true
         };
         var statusChart = new google.visualization.ColumnChart(jobStatusDiv);
-        statusChart.draw(jobStatusData, jobOptions);
+        statusChart.draw(jobData, jobOptions);
+        addDataLabels(jobStatusDiv, statusCounts, statusTotal);
       }
     }
 
+    /* ============================================================
+       2. PRIORITY DISTRIBUTION — Donut Chart
+       Colors: Critical=Red, High=Orange, Medium=Blue, Low=Green
+       ============================================================ */
     var priorityDiv = document.getElementById('chartPriority');
     if (priorityDiv) {
-      if (!data.hasPriorityData) {
-        priorityDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px">No Priority Data Available</div>';
+      var priCounts = [
+        { name: 'Critical', count: data.criticalPriority || 0, color: '#EF4444' },
+        { name: 'High', count: data.highPriority || 0, color: '#F97316' },
+        { name: 'Medium', count: data.mediumPriority || 0, color: '#3B82F6' },
+        { name: 'Low', count: data.lowPriority || 0, color: '#22C55E' }
+      ];
+      var priTotal = priCounts.reduce(function(s, r) { return s + r.count; }, 0);
+      if (priTotal === 0) {
+        priorityDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No priority data available</div>';
       } else {
         priorityDiv.innerHTML = '';
-        var priorityData = google.visualization.arrayToDataTable([
-          ['Priority', 'Count'],
-          ['Critical', data.criticalPriority || 0],
-          ['High', data.highPriority || 0],
-          ['Medium', data.mediumPriority || 0],
-          ['Low', data.lowPriority || 0]
-        ]);
+        var priRows = [['Priority', 'Count', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        priCounts.forEach(function(r) {
+          var pct = priTotal > 0 ? Math.round((r.count / priTotal) * 100) : 0;
+          var tip = '<div style="' + tooltipStyle + '">' +
+            '<div style="font-weight:700;font-size:14px;margin-bottom:4px;color:' + r.color + '">' + r.name + '</div>' +
+            '<div>Jobs: <b>' + r.count + '</b></div>' +
+            '<div>Share: <b>' + pct + '%</b> of ' + priTotal + ' total</div>' +
+            '</div>';
+          priRows.push([r.name, r.count, tip]);
+        });
+        var priData = new google.visualization.arrayToDataTable(priRows);
+        var pieColors = priCounts.map(function(r) { return r.color; });
         var pieOptions = {
           backgroundColor: 'transparent',
-          chartArea: { width: '85%', height: '75%' },
-          legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 10 } },
-          colors: ['#ef4444', '#f59e0b', '#06b6d4', '#22c55e'],
-          pieHole: 0.45
+          chartArea: { left: 10, right: 10, top: 10, bottom: 40, width: '90%', height: '70%' },
+          legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 11 } },
+          colors: pieColors,
+          pieHole: 0.45,
+          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          pieSliceText: 'none',
+          animation: animCfg
         };
         var pieChart = new google.visualization.PieChart(priorityDiv);
-        pieChart.draw(priorityData, pieOptions);
+        pieChart.draw(priData, pieOptions);
       }
     }
 
+    /* ============================================================
+       3. MTTR TREND — Line Chart with Avg/Max/Min
+       ============================================================ */
     var mttrDiv = document.getElementById('chartMTTR');
     if (mttrDiv) {
+      var stats = data.mttrStats || { avg: 0, max: 0, min: 0, count: 0 };
       var mttrHasData = mt.some(function(v) { return v !== null && v > 0; });
       if (!mttrHasData) {
-        mttrDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px">N/A</div>';
+        mttrDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;margin-bottom:8px;opacity:0.4"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><div>Not enough maintenance history</div><div style="font-size:11px;margin-top:4px;opacity:0.6">MTTR data will appear once job cards are closed</div></div>';
       } else {
         mttrDiv.innerHTML = '';
-        var mttrRows = [['Period', 'MTTR']];
-        for (var mi = 0; mi < months.length; mi++) { mttrRows.push([months[mi], mt[mi] !== null && mt[mi] !== undefined ? mt[mi] : null]); }
-        var mttrData = google.visualization.arrayToDataTable(mttrRows);
-        var lineOptions = {
+        var mttrRows = [['Period', 'MTTR (hrs)', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        for (var mi = 0; mi < months.length; mi++) {
+          var val = (mt[mi] !== null && mt[mi] !== undefined) ? mt[mi] : null;
+          var tip = '<div style="' + tooltipStyle + '">' +
+            '<div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#3B82F6">MTTR</div>' +
+            '<div>Period: <b>' + months[mi] + '</b></div>' +
+            '<div>MTTR: <b>' + (val !== null ? val.toFixed(1) + ' hrs' : 'N/A') + '</b></div>' +
+            (stats.avg > 0 ? '<div style="margin-top:4px;border-top:1px solid #eee;padding-top:4px;font-size:11px;color:#888">Avg: ' + stats.avg.toFixed(1) + 'h &middot; Max: ' + stats.max.toFixed(1) + 'h &middot; Min: ' + stats.min.toFixed(1) + 'h</div>' : '') +
+            '</div>';
+          mttrRows.push([months[mi], val, tip]);
+        }
+        var mttrData = new google.visualization.arrayToDataTable(mttrRows);
+        var mttrOptions = {
           backgroundColor: 'transparent',
-          chartArea: { width: '85%', height: '70%' },
+          chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' },
           legend: { position: 'none' },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 9 }, gridlines: { color: '#1e2140' } },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 9 }, gridlines: { color: '#1e2140' }, minValue: 0 },
-          colors: ['#6366f1'],
+          hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } },
+          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          colors: ['#3B82F6'],
           curveType: 'function',
-          lineWidth: 2,
-          pointSize: 4
+          lineWidth: 3,
+          pointSize: 6,
+          pointShape: 'circle',
+          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          animation: animCfg
         };
+        if (stats.avg > 0) {
+          mttrData.addColumn('number', 'Average');
+          mttrData.addColumn({ type: 'string', role: 'tooltip', p: { html: true } });
+          for (var mi2 = 0; mi2 < months.length; mi2++) {
+            var avgTip = '<div style="' + tooltipStyle + '"><div style="font-weight:700;color:#94A3B8">Average MTTR</div><div>' + stats.avg.toFixed(1) + ' hours</div></div>';
+            mttrData.setCell(mi2, 2, stats.avg, avgTip);
+          }
+          mttrOptions.colors.push('#94A3B8');
+          mttrOptions.lineDashStyle = [6, 4];
+          mttrOptions.series = { 1: { lineDashStyle: [6, 4], lineWidth: 1, pointSize: 0, enableInteractivity: false } };
+        }
         var mttrChart = new google.visualization.LineChart(mttrDiv);
-        mttrChart.draw(mttrData, lineOptions);
+        mttrChart.draw(mttrData, mttrOptions);
       }
       var mttrBadge = document.getElementById('mttrBadge');
       if (mttrBadge) {
@@ -418,26 +482,40 @@ function doDrawCharts(data) {
       }
     }
 
+    /* ============================================================
+       4. MTBF TREND — Line Chart
+       ============================================================ */
     var mtbfDiv = document.getElementById('chartMTBF');
     if (mtbfDiv) {
       var mtbfHasData = mf.some(function(v) { return v !== null && v > 0; });
       if (!mtbfHasData) {
-        mtbfDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px">N/A</div>';
+        mtbfDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:32px;height:32px;margin-bottom:8px;opacity:0.4"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><div>Not enough maintenance history</div><div style="font-size:11px;margin-top:4px;opacity:0.6">MTBF data will appear after multiple breakdowns are recorded</div></div>';
       } else {
         mtbfDiv.innerHTML = '';
-        var mtbfRows = [['Period', 'MTBF']];
-        for (var mi2 = 0; mi2 < months.length; mi2++) { mtbfRows.push([months[mi2], mf[mi2] !== null && mf[mi2] !== undefined ? mf[mi2] : null]); }
-        var mtbfData = google.visualization.arrayToDataTable(mtbfRows);
+        var mtbfRows = [['Period', 'MTBF (days)', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        for (var mi3 = 0; mi3 < months.length; mi3++) {
+          var mfVal = (mf[mi3] !== null && mf[mi3] !== undefined) ? mf[mi3] : null;
+          var mfTip = '<div style="' + tooltipStyle + '">' +
+            '<div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#22C55E">MTBF</div>' +
+            '<div>Period: <b>' + months[mi3] + '</b></div>' +
+            '<div>MTBF: <b>' + (mfVal !== null ? mfVal.toFixed(1) + ' days' : 'N/A') + '</b></div>' +
+            '</div>';
+          mtbfRows.push([months[mi3], mfVal, mfTip]);
+        }
+        var mtbfData = new google.visualization.arrayToDataTable(mtbfRows);
         var mtbfOptions = {
           backgroundColor: 'transparent',
-          chartArea: { width: '85%', height: '70%' },
+          chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' },
           legend: { position: 'none' },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 9 }, gridlines: { color: '#1e2140' } },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 9 }, gridlines: { color: '#1e2140' }, minValue: 0 },
-          colors: ['#22c55e'],
+          hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } },
+          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          colors: ['#22C55E'],
           curveType: 'function',
-          lineWidth: 2,
-          pointSize: 4
+          lineWidth: 3,
+          pointSize: 6,
+          pointShape: 'circle',
+          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          animation: animCfg
         };
         var mtbfChart = new google.visualization.LineChart(mtbfDiv);
         mtbfChart.draw(mtbfData, mtbfOptions);
@@ -451,61 +529,86 @@ function doDrawCharts(data) {
       }
     }
 
+    /* ============================================================
+       5. MONTHLY JOBS — Stacked Column Chart
+       Per-status colors
+       ============================================================ */
     var monthlyDiv = document.getElementById('chartMonthlyJobs');
     if (monthlyDiv) {
-      monthlyDiv.innerHTML = '';
-      var hasMonthly = op.some(function(v) { return v > 0; }) || rn.some(function(v) { return v > 0; }) || cl.some(function(v) { return v > 0; });
+      var hasMonthly = op.some(function(v) { return v > 0; }) || rn.some(function(v) { return v > 0; }) || cl.some(function(v) { return v > 0; }) || pd.some(function(v) { return v > 0; }) || ap.some(function(v) { return v > 0; });
       if (!hasMonthly) {
-        monthlyDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px">No monthly job data</div>';
+        monthlyDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No monthly job data</div>';
       } else {
-        var monthlyData = google.visualization.arrayToDataTable([
-          ['Month', 'Open', 'Running', 'Closed', 'Pending', 'Approved'],
-          [months[0], op[0], rn[0], cl[0], pd[0], ap[0]],
-          [months[1], op[1], rn[1], cl[1], pd[1], ap[1]],
-          [months[2], op[2], rn[2], cl[2], pd[2], ap[2]],
-          [months[3], op[3], rn[3], cl[3], pd[3], ap[3]],
-          [months[4], op[4], rn[4], cl[4], pd[4], ap[4]],
-          [months[5], op[5], rn[5], cl[5], pd[5], ap[5]]
-        ]);
+        var monthRows = [['Month', 'Open', 'Running', 'Pending', 'Closed', 'Approved', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        for (var mi4 = 0; mi4 < months.length; mi4++) {
+          var monthTotal = op[mi4] + rn[mi4] + pd[mi4] + cl[mi4] + ap[mi4];
+          var mtip = '<div style="' + tooltipStyle + '">' +
+            '<div style="font-weight:700;font-size:14px;margin-bottom:6px">' + months[mi4] + '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:2px">' +
+            (op[mi4] > 0 ? '<div style="color:#3B82F6">Open: <b>' + op[mi4] + '</b></div>' : '') +
+            (rn[mi4] > 0 ? '<div style="color:#22C55E">Running: <b>' + rn[mi4] + '</b></div>' : '') +
+            (pd[mi4] > 0 ? '<div style="color:#F97316">Pending: <b>' + pd[mi4] + '</b></div>' : '') +
+            (cl[mi4] > 0 ? '<div style="color:#6B7280">Closed: <b>' + cl[mi4] + '</b></div>' : '') +
+            (ap[mi4] > 0 ? '<div style="color:#A855F7">Approved: <b>' + ap[mi4] + '</b></div>' : '') +
+            '<div style="border-top:1px solid #eee;padding-top:3px;margin-top:3px;font-weight:600">Total: ' + monthTotal + '</div>' +
+            '</div></div>';
+          monthRows.push([months[mi4], op[mi4], rn[mi4], pd[mi4], cl[mi4], ap[mi4], mtip]);
+        }
+        var monthlyData = new google.visualization.arrayToDataTable(monthRows);
         var monthlyOptions = {
           backgroundColor: 'transparent',
-          chartArea: { width: '85%', height: '65%' },
-          legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 9 } },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 9 }, gridlines: { color: '#1e2140' } },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 9 }, gridlines: { color: '#1e2140' }, minValue: 0 },
-          colors: ['#6366f1', '#06b6d4', '#22c55e', '#a855f7', '#f59e0b'],
+          chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' },
+          legend: { position: 'bottom', textStyle: { color: '#9498b8', fontSize: 10 } },
+          hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } },
+          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          colors: ['#3B82F6', '#22C55E', '#F97316', '#6B7280', '#A855F7'],
           bar: { groupWidth: '65%' },
-          isStacked: true
+          isStacked: true,
+          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          animation: animCfg
         };
         var monthlyChart = new google.visualization.ColumnChart(monthlyDiv);
         monthlyChart.draw(monthlyData, monthlyOptions);
       }
     }
 
+    /* ============================================================
+       6. BREAKDOWN TREND — Smooth Area Chart
+       ============================================================ */
     var breakdownDiv = document.getElementById('chartBreakdown');
     if (breakdownDiv) {
-      breakdownDiv.innerHTML = '';
       var hasBd = bd.some(function(v) { return v > 0; });
       if (!hasBd) {
-        breakdownDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px">No breakdown data</div>';
+        breakdownDiv.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:13px">No breakdown data</div>';
       } else {
-        var breakdownData = google.visualization.arrayToDataTable([
-          ['Month', 'Breakdowns'],
-          [months[0], bd[0]],
-          [months[1], bd[1]],
-          [months[2], bd[2]],
-          [months[3], bd[3]],
-          [months[4], bd[4]],
-          [months[5], bd[5]]
-        ]);
+        var bdRows = [['Month', 'Breakdowns', { role: 'tooltip', type: 'string', p: { html: true } }]];
+        var bdTotal = 0;
+        for (var mi5 = 0; mi5 < months.length; mi5++) { bdTotal += bd[mi5]; }
+        for (var mi6 = 0; mi6 < months.length; mi6++) {
+          var bdPct = bdTotal > 0 ? Math.round((bd[mi6] / bdTotal) * 100) : 0;
+          var bdTip = '<div style="' + tooltipStyle + '">' +
+            '<div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#EF4444">Breakdowns</div>' +
+            '<div>Period: <b>' + months[mi6] + '</b></div>' +
+            '<div>Count: <b>' + bd[mi6] + '</b></div>' +
+            '<div>Share: <b>' + bdPct + '%</b> of ' + bdTotal + ' total</div>' +
+            '</div>';
+          bdRows.push([months[mi6], bd[mi6], bdTip]);
+        }
+        var breakdownData = new google.visualization.arrayToDataTable(bdRows);
         var areaOptions = {
           backgroundColor: 'transparent',
-          chartArea: { width: '85%', height: '70%' },
+          chartArea: { left: 40, right: 20, top: 15, bottom: 35, width: '90%', height: '65%' },
           legend: { position: 'none' },
-          hAxis: { textStyle: { color: '#9498b8', fontSize: 9 }, gridlines: { color: '#1e2140' } },
-          vAxis: { textStyle: { color: '#9498b8', fontSize: 9 }, gridlines: { color: '#1e2140' }, minValue: 0 },
-          colors: ['#ef4444'],
-          areaOpacity: 0.15
+          hAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'transparent' } },
+          vAxis: { textStyle: { color: '#9498b8', fontSize: 10 }, gridlines: { color: 'rgba(255,255,255,0.06)' }, minValue: 0 },
+          colors: ['#EF4444'],
+          lineWidth: 2,
+          curveType: 'function',
+          pointSize: 5,
+          pointShape: 'circle',
+          areaOpacity: 0.15,
+          tooltip: { isHtml: true, textStyle: { color: '#333', fontSize: 12 } },
+          animation: animCfg
         };
         var breakdownChart = new google.visualization.AreaChart(breakdownDiv);
         breakdownChart.draw(breakdownData, areaOptions);
@@ -513,6 +616,32 @@ function doDrawCharts(data) {
     }
   } catch (e) {
     console.log('Chart error:', e);
+  }
+}
+
+function addDataLabels(divEl, items, total) {
+  var bars = divEl.querySelectorAll('rect');
+  if (!bars || bars.length === 0) return;
+  var rects = Array.prototype.slice.call(bars).filter(function(r) {
+    return r.getAttribute('fill') && r.getAttribute('height') && parseFloat(r.getAttribute('height')) > 2;
+  });
+  var counts = items.map(function(r) { return r.count; });
+  var maxCount = Math.max.apply(null, counts.concat([1]));
+  for (var i = 0; i < rects.length && i < counts.length; i++) {
+    var rect = rects[i];
+    var count = counts[i];
+    if (count <= 0) continue;
+    var textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    var rx = parseFloat(rect.getAttribute('x')) + parseFloat(rect.getAttribute('width')) / 2;
+    var ry = parseFloat(rect.getAttribute('y')) - 6;
+    textEl.setAttribute('x', rx);
+    textEl.setAttribute('y', ry < 10 ? 14 : ry);
+    textEl.setAttribute('text-anchor', 'middle');
+    textEl.setAttribute('fill', '#ccc');
+    textEl.setAttribute('font-size', '12');
+    textEl.setAttribute('font-weight', '600');
+    textEl.textContent = count;
+    rect.parentNode.appendChild(textEl);
   }
 }
 

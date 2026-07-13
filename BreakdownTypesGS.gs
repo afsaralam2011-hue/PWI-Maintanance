@@ -5,8 +5,8 @@ function initBreakdownTypesSheet() {
     sheet = ss.insertSheet(CONFIG.SHEET_NAMES.BREAKDOWN_TYPES);
   }
   ensureHeaders(sheet, CONFIG.BREAKDOWN_TYPE_FIELDS);
-  var data = sheet.getDataRange().getValues();
-  var hasData = data.length > 1;
+  var data = getAllData(CONFIG.SHEET_NAMES.BREAKDOWN_TYPES);
+  var hasData = data.length > 0;
   if (!hasData) {
     var sampleData = [
       ['BT001', 'Mechanical', 'Active'],

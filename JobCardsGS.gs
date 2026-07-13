@@ -25,6 +25,9 @@ function normalizeJobCard(jc) {
   jc.AssignedTechnician = jc.AssignedTechnician || '';
   jc.StartedBy = jc.StartedBy || '';
   jc.StartDateTime = jc.StartDateTime || '';
+  // Normalize status: CurrentStatus is the canonical field; Status is legacy fallback
+  jc.CurrentStatus = jc.CurrentStatus || jc.Status || '';
+  jc.Status = jc.CurrentStatus;
   // dynamic WaitingTime: compute live for OPEN/RUNNING/returned jobs
   if (jc.StartDateTime && jc.StartDateTime !== '') {
     // Frozen at time of start

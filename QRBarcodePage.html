@@ -44,7 +44,7 @@
     <div class="modal-body" style="padding:20px">
       <div style="margin-bottom:14px">
         <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Enter QR Code URL or Barcode Number</label>
-        <input type="text" id="qrScanInput" placeholder="Scan or type QR code / barcode..." style="width:100%;padding:10px 12px;font-size:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:monospace" autofocus onkeydown="if(event.key==='Enter')processQRScan()">
+        <input type="text" id="qrScanInput" placeholder="Scan or type QR code / barcode..." style="width:100%;padding:10px 12px;font-size:14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:monospace" onkeydown="if(event.key==='Enter')processQRScan()">
       </div>
       <div style="display:flex;gap:8px">
         <button class="filter-btn btn-primary" onclick="processQRScan()" style="flex:1">Look Up</button>
@@ -340,7 +340,7 @@ function showQRScanDialog() {
   var el = document.getElementById('qrScanModal'); if (el) el.style.display = 'flex';
   var el2 = document.getElementById('qrScanInput'); if (el2) el2.value = '';
   var el3 = document.getElementById('qrScanResult'); if (el3) el3.innerHTML = '';
-  setTimeout(function() { var el = document.getElementById('qrScanInput'); if (el) el.focus(); }, 200);
+  setTimeout(function() { try { var el = document.getElementById('qrScanInput'); if (el) el.focus(); } catch(e) {} }, 200);
 }
 
 function closeQRScanDialog() {

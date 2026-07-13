@@ -126,7 +126,25 @@ function getDashboardNotifications(count, email) {
   try {
     count = count || 10;
     var data = email ? getUserNotifications(email) : getNotifications();
-    var stats = getNotificationStats(email);
+    var moduleCounts = {};
+    var unreadCount = 0;
+    var criticalCount = 0;
+    var approvalCount = 0;
+    for (var i = 0; i < data.length; i++) {
+      var mod = data[i].Module || 'Unknown';
+      if (!moduleCounts[mod]) moduleCounts[mod] = 0;
+      moduleCounts[mod]++;
+      if ((data[i].ReadStatus || '').toLowerCase() !== 'read') unreadCount++;
+      if (data[i].Priority === 'Critical') criticalCount++;
+      if (data[i].NotificationType === 'Approval' || (data[i].Title && data[i].Title.toLowerCase().indexOf('approval') > -1)) approvalCount++;
+    }
+    var stats = {
+      total: data.length,
+      unread: unreadCount,
+      critical: criticalCount,
+      pendingApproval: approvalCount,
+      byModule: moduleCounts
+    };
     return {
       data: data.slice(0, count),
       stats: stats
@@ -374,6 +392,7 @@ function getNotificationTypeStats(email) {
 function checkAndNotifyLowStock() {
   try {
     var parts = getAllData(CONFIG.SHEET_NAMES.SPARE_PARTS) || [];
+    var storeUsers = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
     var createdCount = 0;
     for (var i = 0; i < parts.length; i++) {
       var p = parts[i];
@@ -383,7 +402,6 @@ function checkAndNotifyLowStock() {
         var title = 'Low Stock: ' + (p.PartName || p.PartCode);
         var message = 'Stock level for ' + (p.PartName || p.PartCode) + ' is ' + stock + ', below minimum of ' + min + '.';
         createNotification(title, message, CONFIG.NOTIFICATION_MODULES.SPARE_PART, CONFIG.PRIORITY.HIGH, 'System', '', 'navigateTo(\'spareparts\')', 'Warning');
-        var storeUsers = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
         for (var u = 0; u < storeUsers.length; u++) {
           if (storeUsers[u].Role === 'Store' && storeUsers[u].Status === CONFIG.STATUS.ACTIVE && storeUsers[u].Email) {
             sendEmailNotification(storeUsers[u].Email, title, message);
@@ -503,6 +521,7 @@ function checkAndNotifyWaitingApproval() {
 function checkAndNotifyMachineBreakdown() {
   try {
     var allJCs = getAllData(CONFIG.SHEET_NAMES.JOBCARDS) || [];
+    var admins = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
     var createdCount = 0;
     for (var i = 0; i < allJCs.length; i++) {
       var jc = allJCs[i];
@@ -512,7 +531,6 @@ function checkAndNotifyMachineBreakdown() {
       var title = 'Machine Breakdown: ' + (jc.Machine || '');
       var message = 'Breakdown alert for ' + (jc.Machine || '') + ' - Job card ' + (jc.JobCardNo || '') + ' is RUNNING with ' + jc.Priority + ' priority.';
         createNotification(title, message, CONFIG.NOTIFICATION_MODULES.BREAKDOWN, CONFIG.PRIORITY.CRITICAL, 'System', '', 'navigateTo(\'jobcards\')', 'Critical');
-      var admins = getAllData(CONFIG.SHEET_NAMES.USERS) || [];
       for (var a = 0; a < admins.length; a++) {
         if (admins[a].Role === CONFIG.ROLES.ADMIN && admins[a].Status === CONFIG.STATUS.ACTIVE && admins[a].Email) {
           sendEmailNotification(admins[a].Email, title, message);

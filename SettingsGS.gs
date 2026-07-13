@@ -16,61 +16,64 @@ function getSetting(key) {
 }
 
 function saveSetting(key, value) {
-  var sheet = getSheet(CONFIG.SHEET_NAMES.SETTINGS);
-  var data = sheet.getDataRange().getValues();
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === key) {
-      sheet.getRange(i + 1, 2).setValue(value);
-      sheet.getRange(i + 1, 3).setValue(getCurrentTimestamp());
-      return;
+  var data = getAllData(CONFIG.SHEET_NAMES.SETTINGS);
+  var found = false;
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].Setting === key) {
+      found = true;
+      break;
     }
   }
-  sheet.appendRow([key, value, getCurrentTimestamp()]);
+  if (found) {
+    var sheet = getSheet(CONFIG.SHEET_NAMES.SETTINGS);
+    var raw = sheet.getDataRange().getValues();
+    for (var r = 1; r < raw.length; r++) {
+      if (raw[r][0] === key) {
+        sheet.getRange(r + 1, 2).setValue(value);
+        sheet.getRange(r + 1, 3).setValue(getCurrentTimestamp());
+        break;
+      }
+    }
+  } else {
+    var sheet = getSheet(CONFIG.SHEET_NAMES.SETTINGS);
+    sheet.appendRow([key, value, getCurrentTimestamp()]);
+  }
+  invalidateCache(CONFIG.SHEET_NAMES.SETTINGS);
 }
 
 function getDepartments() {
-  var sheet = getSheet(CONFIG.SHEET_NAMES.DEPARTMENTS);
-  var data = sheet.getDataRange().getValues();
-  Logger.log('getDepartments(): raw rows=' + data.length);
-  console.log('getDepartments(): raw rows=' + data.length);
-  if (data.length < 2) {
-    Logger.log('getDepartments(): no data, initializing with defaults');
-    console.log('getDepartments(): no data, initializing with defaults');
+  var data = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS);
+  if (data.length === 0) {
     initializeDepartmentMaster();
-    data = sheet.getDataRange().getValues();
+    invalidateCache(CONFIG.SHEET_NAMES.DEPARTMENTS);
+    data = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS);
   }
-  var headers = data[0] || [];
-  var idIdx = headers.indexOf('DepartmentID');
-  var nameIdx = headers.indexOf('Department');
-  var statusIdx = headers.indexOf('Status');
   var result = [];
-  for (var i = 1; i < data.length; i++) {
+  for (var i = 0; i < data.length; i++) {
     result.push({
-      ID: idIdx >= 0 ? data[i][idIdx] : '',
-      Name: nameIdx >= 0 ? data[i][nameIdx] : '',
-      Status: statusIdx >= 0 ? data[i][statusIdx] : ''
+      ID: data[i].DepartmentID || '',
+      Name: data[i].Department || '',
+      Status: data[i].Status || ''
     });
   }
-  Logger.log('getDepartments(): returning ' + result.length + ' departments');
-  console.log('getDepartments(): returning ' + result.length + ' departments');
   return result;
 }
 
 function addDepartment(name) {
-  var sheet = getSheet(CONFIG.SHEET_NAMES.DEPARTMENTS);
   var id = generateId(CONFIG.SHEET_NAMES.DEPARTMENTS, CONFIG.ID_PREFIXES.DEPARTMENT);
-  var headers = sheet.getDataRange().getValues()[0] || [];
-  var row = [];
+  var data = getAllData(CONFIG.SHEET_NAMES.DEPARTMENTS);
+  var headers = data.length > 0 ? Object.keys(data[0]) : getSheet(CONFIG.SHEET_NAMES.DEPARTMENTS).getDataRange().getValues()[0];
+  var row = {};
   for (var c = 0; c < headers.length; c++) {
-    if (headers[c] === 'DepartmentID') row.push(id);
-    else if (headers[c] === 'Department') row.push(name);
-    else if (headers[c] === 'Status') row.push(CONFIG.STATUS.ACTIVE);
-    else if (headers[c] === 'CreatedAt') row.push(getCurrentTimestamp());
-    else if (headers[c] === 'SundayOff') row.push('No');
-    else if (headers[c] === 'HoursPerDay') row.push('8');
-    else row.push('');
+    if (headers[c] === 'DepartmentID') row[headers[c]] = id;
+    else if (headers[c] === 'Department') row[headers[c]] = name;
+    else if (headers[c] === 'Status') row[headers[c]] = CONFIG.STATUS.ACTIVE;
+    else if (headers[c] === 'CreatedAt') row[headers[c]] = getCurrentTimestamp();
+    else if (headers[c] === 'SundayOff') row[headers[c]] = 'No';
+    else if (headers[c] === 'HoursPerDay') row[headers[c]] = '8';
+    else row[headers[c]] = '';
   }
-  sheet.appendRow(row);
+  addRow(CONFIG.SHEET_NAMES.DEPARTMENTS, row);
   logActivity('Add Department', name);
   return getDepartments();
 }

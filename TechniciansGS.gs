@@ -170,12 +170,13 @@ function searchTechnicians(query) {
 }
 
 function generateTechnicianId() {
-  var sheet = getSheet(CONFIG.SHEET_NAMES.TECHNICIANS);
-  var data = sheet.getDataRange().getValues();
+  var data = getAllData(CONFIG.SHEET_NAMES.TECHNICIANS);
   var max = 0;
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0]) {
-      var num = parseInt(String(data[i][0]).replace('EMP', ''), 10);
+  for (var i = 0; i < data.length; i++) {
+    var keys = Object.keys(data[i]);
+    var id = keys.length > 0 ? data[i][keys[0]] : '';
+    if (id) {
+      var num = parseInt(String(id).replace('EMP', ''), 10);
       if (!isNaN(num) && num > max) max = num;
     }
   }

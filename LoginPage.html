@@ -1379,7 +1379,7 @@ function submitResetPassword() {
         }
         document.getElementById('forgotStep2').style.display = 'none';
         document.getElementById('resetPasswordBtn').style.display = 'none';
-        setTimeout(function() { closeForgotPassword(); }, 2500);
+        setTimeout(function() { closeForgotPassword(); }, 1500);
       } else {
         if (resultDiv) {
           resultDiv.textContent = result && result.message ? result.message : 'Invalid or expired token.';

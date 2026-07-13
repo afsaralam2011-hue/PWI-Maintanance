@@ -8,40 +8,54 @@ function emailInitLogsSheet() {
 }
 
 function emailEnsureDefaults() {
-  Logger.log('emailEnsureDefaults() called');
-  console.log('emailEnsureDefaults() called');
-  if (getSetting(CONFIG.EMAIL_SETTINGS_KEYS.ENABLED) === null) {
-    saveSetting(CONFIG.EMAIL_SETTINGS_KEYS.ENABLED, 'true');
+  var settingsData = getAllData(CONFIG.SHEET_NAMES.SETTINGS);
+  var settingsMap = {};
+  for (var i = 0; i < settingsData.length; i++) {
+    settingsMap[settingsData[i].Setting] = settingsData[i].Value;
   }
-  if (getSetting(CONFIG.EMAIL_SETTINGS_KEYS.SENDER_NAME) === null) {
-    saveSetting(CONFIG.EMAIL_SETTINGS_KEYS.SENDER_NAME, CONFIG.EMAIL_DEFAULTS.SENDER_NAME);
+  var defaults = [
+    [CONFIG.EMAIL_SETTINGS_KEYS.ENABLED, 'true'],
+    [CONFIG.EMAIL_SETTINGS_KEYS.SENDER_NAME, CONFIG.EMAIL_DEFAULTS.SENDER_NAME],
+    [CONFIG.EMAIL_SETTINGS_KEYS.REPLY_TO, CONFIG.EMAIL_DEFAULTS.REPLY_TO],
+    [CONFIG.EMAIL_SETTINGS_KEYS.DAILY_SUMMARY_TIME, CONFIG.EMAIL_DEFAULTS.DAILY_SUMMARY_TIME],
+    [CONFIG.EMAIL_SETTINGS_KEYS.WEEKLY_SUMMARY_DAY, CONFIG.EMAIL_DEFAULTS.WEEKLY_SUMMARY_DAY]
+  ];
+  var sheet = getSheet(CONFIG.SHEET_NAMES.SETTINGS);
+  var data = sheet.getDataRange().getValues();
+  for (var d = 0; d < defaults.length; d++) {
+    if (settingsMap[defaults[d][0]] === undefined || settingsMap[defaults[d][0]] === null) {
+      var found = false;
+      for (var r = 1; r < data.length; r++) {
+        if (data[r][0] === defaults[d][0]) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        sheet.appendRow([defaults[d][0], defaults[d][1], getCurrentTimestamp()]);
+      }
+    }
   }
-  if (getSetting(CONFIG.EMAIL_SETTINGS_KEYS.REPLY_TO) === null) {
-    saveSetting(CONFIG.EMAIL_SETTINGS_KEYS.REPLY_TO, CONFIG.EMAIL_DEFAULTS.REPLY_TO);
-  }
-  if (getSetting(CONFIG.EMAIL_SETTINGS_KEYS.DAILY_SUMMARY_TIME) === null) {
-    saveSetting(CONFIG.EMAIL_SETTINGS_KEYS.DAILY_SUMMARY_TIME, CONFIG.EMAIL_DEFAULTS.DAILY_SUMMARY_TIME);
-  }
-  if (getSetting(CONFIG.EMAIL_SETTINGS_KEYS.WEEKLY_SUMMARY_DAY) === null) {
-    saveSetting(CONFIG.EMAIL_SETTINGS_KEYS.WEEKLY_SUMMARY_DAY, CONFIG.EMAIL_DEFAULTS.WEEKLY_SUMMARY_DAY);
-  }
-  Logger.log('emailEnsureDefaults() completed');
-  console.log('emailEnsureDefaults() completed');
+  invalidateCache(CONFIG.SHEET_NAMES.SETTINGS);
 }
 
 function emailGetSettings() {
   try {
     emailEnsureDefaults();
+    var settingsData = getAllData(CONFIG.SHEET_NAMES.SETTINGS);
+    var settingsMap = {};
+    for (var i = 0; i < settingsData.length; i++) {
+      settingsMap[settingsData[i].Setting] = settingsData[i].Value;
+    }
     return {
-      enabled: getSetting(CONFIG.EMAIL_SETTINGS_KEYS.ENABLED) !== 'false',
-      senderName: getSetting(CONFIG.EMAIL_SETTINGS_KEYS.SENDER_NAME) || CONFIG.EMAIL_DEFAULTS.SENDER_NAME,
-      replyTo: getSetting(CONFIG.EMAIL_SETTINGS_KEYS.REPLY_TO) || CONFIG.EMAIL_DEFAULTS.REPLY_TO,
-      dailySummaryTime: getSetting(CONFIG.EMAIL_SETTINGS_KEYS.DAILY_SUMMARY_TIME) || CONFIG.EMAIL_DEFAULTS.DAILY_SUMMARY_TIME,
-      weeklySummaryDay: getSetting(CONFIG.EMAIL_SETTINGS_KEYS.WEEKLY_SUMMARY_DAY) || CONFIG.EMAIL_DEFAULTS.WEEKLY_SUMMARY_DAY
+      enabled: settingsMap[CONFIG.EMAIL_SETTINGS_KEYS.ENABLED] !== 'false',
+      senderName: settingsMap[CONFIG.EMAIL_SETTINGS_KEYS.SENDER_NAME] || CONFIG.EMAIL_DEFAULTS.SENDER_NAME,
+      replyTo: settingsMap[CONFIG.EMAIL_SETTINGS_KEYS.REPLY_TO] || CONFIG.EMAIL_DEFAULTS.REPLY_TO,
+      dailySummaryTime: settingsMap[CONFIG.EMAIL_SETTINGS_KEYS.DAILY_SUMMARY_TIME] || CONFIG.EMAIL_DEFAULTS.DAILY_SUMMARY_TIME,
+      weeklySummaryDay: settingsMap[CONFIG.EMAIL_SETTINGS_KEYS.WEEKLY_SUMMARY_DAY] || CONFIG.EMAIL_DEFAULTS.WEEKLY_SUMMARY_DAY
     };
   } catch (e) {
     Logger.log('emailGetSettings() ERROR: ' + e.message);
-    console.log('emailGetSettings() ERROR: ' + e.message);
     return {
       enabled: true,
       senderName: CONFIG.EMAIL_DEFAULTS.SENDER_NAME,
@@ -173,11 +187,11 @@ function emailLog(recipient, subject, module, refId, status, errorMsg, sentBy) {
   console.log('emailLog() called: recipient=' + recipient + ', subject=' + subject);
   try {
     emailInitLogsSheet();
-    var sheet = getSheet(CONFIG.SHEET_NAMES.EMAIL_LOGS);
-    var data = sheet.getDataRange().getValues();
+    var logsData = getAllData(CONFIG.SHEET_NAMES.EMAIL_LOGS);
     var maxNum = 0;
-    for (var i = 1; i < data.length; i++) {
-      var eid = String(data[i][0] || '');
+    for (var i = 0; i < logsData.length; i++) {
+      var keys = Object.keys(logsData[i]);
+      var eid = keys.length > 0 ? String(logsData[i][keys[0]] || '') : '';
       var num = parseInt(eid.replace('EML', ''), 10);
       if (!isNaN(num) && num > maxNum) maxNum = num;
     }
@@ -384,10 +398,13 @@ function emailRetryFailed() {
         if (!recipient || !subject) continue;
         var sendResult = emailSendRaw(recipient, subject, 'Retry of previously failed email. Please check the system for details.', settings.senderName, settings.replyTo);
         var newStatus = sendResult.success ? CONFIG.EMAIL_STATUS.SENT : CONFIG.EMAIL_STATUS.FAILED;
+        var logsData = getAllData(CONFIG.SHEET_NAMES.EMAIL_LOGS);
+        var emailIdField = Object.keys(logsData[0] || {})[0] || 'EmailID';
+        invalidateCache(CONFIG.SHEET_NAMES.EMAIL_LOGS);
         var sheet = getSheet(CONFIG.SHEET_NAMES.EMAIL_LOGS);
-        var data = sheet.getDataRange().getValues();
-        for (var r = 1; r < data.length; r++) {
-          if (String(data[r][0]) === String(logs[i].EmailID)) {
+        var rawData = sheet.getDataRange().getValues();
+        for (var r = 1; r < rawData.length; r++) {
+          if (String(rawData[r][0]) === String(logs[i][emailIdField])) {
             if (sendResult.success) {
               sheet.getRange(r + 1, 8).setValue(newStatus);
               sheet.getRange(r + 1, 9).setValue('');

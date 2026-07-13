@@ -111,10 +111,16 @@ function loadStartJobCardsData() {
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(data) {
-      startJcData = (data || []).filter(function(jc) {
-        var s = (jc.Status || '').toLowerCase();
+      console.log('[START-JC] Total records loaded:', data ? data.length : 0);
+      var openRecords = (data || []).filter(function(jc) {
+        var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
         return s === 'open' || s === 'waiting';
       });
+      console.log('[START-JC] Open records found:', openRecords.length);
+      if (openRecords.length === 0 && data && data.length > 0) {
+        console.log('[START-JC] SAMPLE STATUSES:', data.slice(0, 5).map(function(j) { return j.JobCardNo + '=' + (j.CurrentStatus || '') + '/' + (j.Status || ''); }));
+      }
+      startJcData = openRecords;
       showLoading(false);
       populateStartJcSelects();
       renderStartJc();

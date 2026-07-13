@@ -1,3 +1,6 @@
+var __sheetCache = {};
+var __sheetCacheDirty = {};
+
 function getSheet(name) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(name);
@@ -14,9 +17,6 @@ function getSheet(name) {
       sheet = ss.getSheetByName(name);
       if (!sheet) throw new Error('Cannot create sheet: ' + name);
     }
-  } else {
-    Logger.log('getSheet(): found existing sheet "' + name + '"');
-    console.log('getSheet(): found existing sheet "' + name + '"');
   }
   return sheet;
 }
@@ -24,8 +24,6 @@ function getSheet(name) {
 function ensureHeaders(sheet, headers) {
   var range = sheet.getDataRange();
   var existing = range.getValues();
-  Logger.log('ensureHeaders(): sheet="' + sheet.getName() + '", dataRange=' + range.getA1Notation() + ', rows=' + existing.length + ', cols=' + (existing.length > 0 ? existing[0].length : 0));
-  console.log('ensureHeaders(): sheet="' + sheet.getName() + '", rows=' + existing.length);
   var isCompletelyEmpty = function(row) {
     for (var ci = 0; ci < row.length; ci++) {
       if (row[ci] !== '' && row[ci] !== null && row[ci] !== undefined) return false;
@@ -33,14 +31,10 @@ function ensureHeaders(sheet, headers) {
     return true;
   };
   if (existing.length === 0 || (existing.length === 1 && isCompletelyEmpty(existing[0]))) {
-    // Empty sheet — append headers
     sheet.appendRow(headers);
     SpreadsheetApp.flush();
-    Logger.log('ensureHeaders(): EMPTY sheet, appended headers: ' + headers.join(','));
-    console.log('ensureHeaders(): EMPTY sheet, appended headers');
     return;
   }
-  // Find first non-empty row
   var firstRowIndex = -1;
   for (var r = 0; r < existing.length; r++) {
     for (var c = 0; c < existing[r].length; c++) {
@@ -52,77 +46,64 @@ function ensureHeaders(sheet, headers) {
     if (firstRowIndex >= 0) break;
   }
   if (firstRowIndex < 0) {
-    // All rows blank — write headers to row 1
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     SpreadsheetApp.flush();
-    Logger.log('ensureHeaders(): all rows blank, set headers row 1');
-    console.log('ensureHeaders(): all rows blank, set headers');
     return;
   }
   if (firstRowIndex > 0) {
-    // Leading blank rows exist — write headers to the first row
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     SpreadsheetApp.flush();
-    Logger.log('ensureHeaders(): LEADING BLANK ROWS, wrote headers to row 1 (first data row was ' + (firstRowIndex + 1) + ')');
-    console.log('ensureHeaders(): leading blank rows, headers written to row 1');
     return;
   }
-  // firstRowIndex === 0: First row has content — log it and assume headers
-  Logger.log('ensureHeaders(): first row HAS CONTENT (first cell="' + String(existing[0][0]).substring(0, 30) + '"), assuming headers exist, skipping');
-  console.log('ensureHeaders(): first row has content "' + String(existing[0][0]).substring(0, 30) + '...", assuming headers OK');
 }
 
 function ensureSheetColumns(sheet, requiredHeaders) {
-  Logger.log('ensureSheetColumns() called: sheet="' + sheet.getName() + '", requiredHeaders=' + JSON.stringify(requiredHeaders));
-  console.log('ensureSheetColumns() called: sheet="' + sheet.getName() + '", requiredHeaders=' + JSON.stringify(requiredHeaders));
   try {
     var range = sheet.getDataRange();
     var data = range.getValues();
     if (data.length === 0) {
-      Logger.log('ensureSheetColumns(): sheet is empty, appending headers');
-      console.log('ensureSheetColumns(): sheet is empty, appending headers');
       sheet.appendRow(requiredHeaders);
       SpreadsheetApp.flush();
       return;
     }
     var currentHeaders = data[0] || [];
-    Logger.log('ensureSheetColumns(): currentHeaders=' + JSON.stringify(currentHeaders));
-    console.log('ensureSheetColumns(): currentHeaders=' + JSON.stringify(currentHeaders));
     var missingHeaders = [];
     requiredHeaders.forEach(function(h) {
       if (currentHeaders.indexOf(h) === -1) {
         missingHeaders.push(h);
       }
     });
-    if (missingHeaders.length === 0) {
-      Logger.log('ensureSheetColumns(): No missing headers, all required columns exist');
-      console.log('ensureSheetColumns(): No missing headers');
-      return;
-    }
-    Logger.log('ensureSheetColumns(): MISSING headers=' + JSON.stringify(missingHeaders));
-    console.log('ensureSheetColumns(): MISSING headers=' + JSON.stringify(missingHeaders));
+    if (missingHeaders.length === 0) return;
     var startCol = currentHeaders.length + 1;
     sheet.getRange(1, startCol, 1, missingHeaders.length).setValues([missingHeaders]);
     SpreadsheetApp.flush();
-    Logger.log('ensureSheetColumns(): Added ' + missingHeaders.length + ' columns starting at col ' + startCol);
-    console.log('ensureSheetColumns(): Added ' + missingHeaders.length + ' columns');
   } catch (e) {
-    Logger.log('ensureSheetColumns(): ERROR=' + e.message + ' stack=' + e.stack);
-    console.log('ensureSheetColumns(): ERROR=' + e.message);
+    console.error('ensureSheetColumns(): ERROR=' + e.message);
+  }
+}
+
+function invalidateCache(sheetName) {
+  if (sheetName) {
+    __sheetCache[sheetName] = null;
+    __sheetCacheDirty[sheetName] = true;
+  } else {
+    __sheetCache = {};
+    __sheetCacheDirty = {};
   }
 }
 
 function getAllData(sheetName) {
   try {
+    if (!__sheetCacheDirty[sheetName] && __sheetCache[sheetName]) {
+      return __sheetCache[sheetName];
+    }
     SpreadsheetApp.flush();
     var sheet = getSheet(sheetName);
     var range = sheet.getDataRange();
     var data = range.getValues();
-    Logger.log('getAllData("' + sheetName + '"): sheet="' + sheet.getName() + '", totalRows=' + data.length + ', typeof=' + typeof data + ', isArray=' + Array.isArray(data));
-    console.log('getAllData("' + sheetName + '"): totalRows=' + data.length);
     if (!data || data.length === 0) {
-      Logger.log('getAllData("' + sheetName + '"): returning [] - no data at all');
-      console.log('getAllData("' + sheetName + '"): returning [] - no data');
+      __sheetCache[sheetName] = [];
+      __sheetCacheDirty[sheetName] = false;
       return [];
     }
     var headerRowIndex = -1;
@@ -136,13 +117,11 @@ function getAllData(sheetName) {
       if (headerRowIndex >= 0) break;
     }
     if (headerRowIndex < 0) {
-      Logger.log('getAllData("' + sheetName + '"): returning [] - no non-empty rows found');
-      console.log('getAllData("' + sheetName + '"): returning [] - all rows empty');
+      __sheetCache[sheetName] = [];
+      __sheetCacheDirty[sheetName] = false;
       return [];
     }
     var headers = data[headerRowIndex];
-    Logger.log('getAllData("' + sheetName + '"): headerRow=' + headerRowIndex + ', headerCount=' + headers.length + ', headers=' + JSON.stringify(headers));
-    console.log('getAllData("' + sheetName + '"): headers=' + JSON.stringify(headers));
     var rows = [];
     for (var i = headerRowIndex + 1; i < data.length; i++) {
       var isEmptyRow = true;
@@ -152,10 +131,7 @@ function getAllData(sheetName) {
           break;
         }
       }
-      if (isEmptyRow) {
-        Logger.log('getAllData("' + sheetName + '"): skipping empty row ' + i);
-        continue;
-      }
+      if (isEmptyRow) continue;
       var row = {};
       for (var j = 0; j < headers.length; j++) {
         var h = headers[j];
@@ -169,24 +145,18 @@ function getAllData(sheetName) {
       }
       rows.push(row);
     }
-    Logger.log('getAllData("' + sheetName + '"): RETURNING ' + rows.length + ' records');
-    console.log('getAllData("' + sheetName + '"): RETURNING ' + rows.length + ' records');
-    if (rows.length > 0) {
-      Logger.log('getAllData("' + sheetName + '"): first record keys=' + Object.keys(rows[0]).join(','));
-      console.log('getAllData("' + sheetName + '"): first record=' + JSON.stringify(rows[0]));
-    }
+    __sheetCache[sheetName] = rows;
+    __sheetCacheDirty[sheetName] = false;
     return rows;
   } catch (e) {
-    Logger.log('getAllData("' + sheetName + '"): ERROR=' + e.message + ' stack=' + e.stack);
-    console.log('getAllData("' + sheetName + '"): ERROR=' + e.message);
+    console.error('getAllData("' + sheetName + '"): ERROR=' + e.message);
     return [];
   }
 }
 
 function getRowCount(sheetName) {
-  var sheet = getSheet(sheetName);
-  var data = sheet.getDataRange().getValues();
-  return data.length > 1 ? data.length - 1 : 0;
+  var data = getAllData(sheetName);
+  return data.length;
 }
 
 function sanitizeSheetValue(key, val) {
@@ -199,22 +169,16 @@ function sanitizeSheetValue(key, val) {
 
 function addRow(sheetName, data) {
   var sheet = getSheet(sheetName);
-  var headers = sheet.getDataRange().getValues()[0];
-  Logger.log('addRow(' + sheetName + '): headers=' + JSON.stringify(headers) + ', data keys=' + Object.keys(data).join(','));
-  console.log('addRow(' + sheetName + '): headers=' + JSON.stringify(headers) + ', data keys=' + Object.keys(data).join(','));
+  var cached = getAllData(sheetName);
+  var headers = (cached.length > 0) ? Object.keys(cached[0]) : sheet.getDataRange().getValues()[0];
   var row = [];
   for (var i = 0; i < headers.length; i++) {
     row.push(sanitizeSheetValue(headers[i], data[headers[i]]) || '');
   }
-  Logger.log('addRow(' + sheetName + '): appending row=' + JSON.stringify(row));
-  console.log('addRow(' + sheetName + '): appending row=' + JSON.stringify(row));
   sheet.appendRow(row);
   SpreadsheetApp.flush();
-  Logger.log('addRow(' + sheetName + '): after flush, reading back...');
-  console.log('addRow(' + sheetName + '): after flush, reading back...');
+  invalidateCache(sheetName);
   var result = getAllData(sheetName);
-  Logger.log('addRow(' + sheetName + '): after write, getAllData returns ' + result.length + ' records');
-  console.log('addRow(' + sheetName + '): after write, getAllData returns ' + result.length + ' records');
   return result;
 }
 
@@ -225,33 +189,50 @@ function updateRow(sheetName, idField, idValue, data) {
   var headers = values[0];
   var idCol = headers.indexOf(idField);
   if (idCol === -1) return getAllData(sheetName);
-  // Convert numeric durations to readable strings before writing to sheet
   var durationFields = ['WaitingTime', 'WorkingTime', 'Downtime', 'TotalDuration'];
   for (var r = 1; r < values.length; r++) {
     if (String(values[r][idCol]) === String(idValue)) {
+      var updates = [];
       for (var j = 0; j < headers.length; j++) {
         if (data.hasOwnProperty(headers[j])) {
           var val = data[headers[j]];
           if (durationFields.indexOf(headers[j]) !== -1 && typeof val === 'number') {
             val = durationToDisplay(val);
           }
-          sheet.getRange(r + 1, j + 1).setValue(val);
+          updates.push({ row: r + 1, col: j + 1, val: val });
         }
+      }
+      if (updates.length === 1) {
+        sheet.getRange(updates[0].row, updates[0].col).setValue(updates[0].val);
+      } else if (updates.length > 1) {
+        var rangeParts = updates.map(function(u) { return sheet.getRange(u.row, u.col); });
+        var batch = sheet.getRange(updates[0].row, 1, 1, headers.length);
+        var rowVals = values[r].slice();
+        for (var u = 0; u < updates.length; u++) {
+          rowVals[updates[u].col - 1] = updates[u].val;
+        }
+        batch.setValues([rowVals]);
       }
       break;
     }
   }
+  invalidateCache(sheetName);
   return getAllData(sheetName);
 }
 
 function updateRowByIndex(sheetName, rowIndex, data) {
   var sheet = getSheet(sheetName);
-  var headers = sheet.getDataRange().getValues()[0];
-  for (var j = 0; j < headers.length; j++) {
-    if (data.hasOwnProperty(headers[j])) {
-      sheet.getRange(rowIndex + 1, j + 1).setValue(sanitizeSheetValue(headers[j], data[headers[j]]));
+  var cached = getAllData(sheetName);
+  var headers = (cached.length > 0) ? Object.keys(cached[0]) : sheet.getDataRange().getValues()[0];
+  var rawHeaders = sheet.getDataRange().getValues()[0];
+  var rowVals = sheet.getRange(rowIndex + 1, 1, 1, rawHeaders.length).getValues()[0];
+  for (var j = 0; j < rawHeaders.length; j++) {
+    if (data.hasOwnProperty(rawHeaders[j])) {
+      rowVals[j] = sanitizeSheetValue(rawHeaders[j], data[rawHeaders[j]]);
     }
   }
+  sheet.getRange(rowIndex + 1, 1, 1, rawHeaders.length).setValues([rowVals]);
+  invalidateCache(sheetName);
   return getAllData(sheetName);
 }
 
@@ -267,6 +248,7 @@ function deleteRow(sheetName, idField, idValue) {
       break;
     }
   }
+  invalidateCache(sheetName);
   return getAllData(sheetName);
 }
 
@@ -286,19 +268,9 @@ function searchData(sheetName, query) {
 }
 
 function getFirstRow(sheetName) {
-  var sheet = getSheet(sheetName);
-  var data = sheet.getDataRange().getValues();
-  if (data.length < 2) return null;
-  var headers = data[0];
-  var row = {};
-  for (var j = 0; j < headers.length; j++) {
-    if (headers[j]) {
-      var val = data[1][j];
-      if (val instanceof Date) val = val.toISOString();
-      row[headers[j]] = val;
-    }
-  }
-  return row;
+  var data = getAllData(sheetName);
+  if (data.length === 0) return null;
+  return data[0];
 }
 
 function getRecordById(sheetName, idField, idValue) {
@@ -317,6 +289,7 @@ function clearSheet(sheetName) {
   if (data.length > 1) {
     sheet.deleteRows(2, data.length - 1);
   }
+  invalidateCache(sheetName);
 }
 
 function sanitizeValue(val) {
@@ -329,8 +302,6 @@ function sanitizeValue(val) {
 }
 
 function testPipeline(sheetName) {
-  Logger.log('=== PIPELINE TEST === Testing sheet: "' + sheetName + '"');
-  console.log('=== PIPELINE TEST === Testing sheet: "' + sheetName + '"');
   var steps = [];
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -350,21 +321,7 @@ function testPipeline(sheetName) {
     var rows = data.length;
     var cols = rows > 0 ? data[0].length : 0;
     steps.push({ step: 'getValues', detail: rows + ' rows x ' + cols + ' cols' });
-    if (rows > 0) {
-      var row0 = [];
-      for (var ci = 0; ci < data[0].length; ci++) {
-        row0.push(String(data[0][ci]).substring(0, 20));
-      }
-      steps.push({ step: 'Row 0 values', detail: '[' + row0.join(',') + ']' });
-      if (rows > 1) {
-        var row1 = [];
-        for (var ci = 0; ci < data[1].length; ci++) {
-          var v = data[1][ci];
-          row1.push(String(v).substring(0, 20) + (v instanceof Date ? '(Date)' : '(' + typeof v + ')'));
-        }
-        steps.push({ step: 'Row 1 values (with types)', detail: '[' + row1.join(',') + ']' });
-      }
-    }
+    invalidateCache(sheetName);
     var result = getAllData(sheetName);
     steps.push({ step: 'getAllData() result', detail: 'Array=' + Array.isArray(result) + ', length=' + result.length });
     if (result && result.length > 0) {
@@ -375,8 +332,6 @@ function testPipeline(sheetName) {
     steps.push({ step: 'ERROR', detail: e.message, error: true });
   }
   steps.push({ step: 'END', detail: '=== PIPELINE TEST END ===' });
-  Logger.log(JSON.stringify(steps));
-  console.log('=== PIPELINE TEST COMPLETE === ' + sheetName);
   return steps;
 }
 
@@ -395,16 +350,23 @@ function testAllPipelines() {
 
 function appendRows(sheetName, rows) {
   var sheet = getSheet(sheetName);
-  var headers = sheet.getDataRange().getValues()[0];
+  var cached = getAllData(sheetName);
+  var headers = (cached.length > 0) ? Object.keys(cached[0]) : sheet.getDataRange().getValues()[0];
+  var rawHeaders = sheet.getDataRange().getValues()[0];
+  var allRows = [];
   for (var i = 0; i < rows.length; i++) {
     var row = [];
-    for (var j = 0; j < headers.length; j++) {
-      row.push(sanitizeSheetValue(headers[j], rows[i][headers[j]]) || '');
+    for (var j = 0; j < rawHeaders.length; j++) {
+      row.push(sanitizeSheetValue(rawHeaders[j], rows[i][rawHeaders[j]]) || '');
     }
-    sheet.appendRow(row);
-    SpreadsheetApp.flush();
-    Logger.log('appendRows(' + sheetName + '): after flush, reading back...');
-    console.log('appendRows(' + sheetName + '): after flush, reading back...');
+    allRows.push(row);
   }
+  if (allRows.length > 0) {
+    var lastRow = sheet.getLastRow();
+    var startRow = lastRow + 1;
+    sheet.getRange(startRow, 1, allRows.length, rawHeaders.length).setValues(allRows);
+    SpreadsheetApp.flush();
+  }
+  invalidateCache(sheetName);
   return getAllData(sheetName);
 }

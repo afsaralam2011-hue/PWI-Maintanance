@@ -1,10 +1,11 @@
 function generateInventoryId(sheetName, prefix) {
-  var sheet = getSheet(sheetName);
-  var data = sheet.getDataRange().getValues();
+  var data = getAllData(sheetName);
   var maxSeq = 0;
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0]) {
-      var val = String(data[i][0]);
+  for (var i = 0; i < data.length; i++) {
+    var keys = Object.keys(data[i]);
+    var id = keys.length > 0 ? data[i][keys[0]] : '';
+    if (id) {
+      var val = String(id);
       if (val.indexOf(prefix) === 0) {
         var num = parseInt(val.substring(prefix.length), 10);
         if (!isNaN(num) && num > maxSeq) maxSeq = num;

@@ -148,8 +148,6 @@ function getDashboardData(filter, userDepartment) {
       chartApproved.push(ca);
       chartBreakdowns.push(cb);
       chartMttr.push(monthBreakdownCount > 0 ? Math.round((monthWorkHours / monthBreakdownCount) * 100) / 100 : null);
-      var prevMonthStart = new Date(cm.getTime() - 30 * 86400000);
-      var prevMonthEnd = new Date(cm.getTime());
       var prevBdCount = 0;
       if (m < 5) {
         var pmIdx = 5 - m - 1;
@@ -157,6 +155,17 @@ function getDashboardData(filter, userDepartment) {
       }
       chartMtbf.push(prevBdCount > 0 ? Math.round((30 / prevBdCount) * 100) / 100 : null);
     }
+
+    var mttrValues = chartMttr.filter(function(v) { return v !== null && v > 0; });
+    var mttrStats = {
+      avg: mttr !== null ? mttr : 0,
+      max: mttrValues.length > 0 ? Math.max.apply(null, mttrValues) : 0,
+      min: mttrValues.length > 0 ? Math.min.apply(null, mttrValues) : 0,
+      count: mttrValues.length
+    };
+
+    var totalStatusJobs = openJobs + runningJobs + closedJobs + pendingJobs + approvedJobs + waitingJobs;
+    var totalPriorityJobs = criticalJobs + highJobs + mediumJobs + lowJobs;
 
     return {
       totalMachines: totalMachines,
@@ -190,6 +199,9 @@ function getDashboardData(filter, userDepartment) {
       pmCompliance: pmCompliance,
       qrGenerated: qrGenerated,
       qrPending: Math.max(0, qrPending),
+      mttrStats: mttrStats,
+      totalStatusJobs: totalStatusJobs,
+      totalPriorityJobs: totalPriorityJobs,
       charts: {
         months: chartMonths,
         openJobs: chartOpen,

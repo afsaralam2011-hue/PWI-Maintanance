@@ -158,11 +158,10 @@ function formatDate(date) {
 
 function generateId(sheetName, prefix) {
   try {
-    var sheet = getSheet(sheetName);
-    var data = sheet.getDataRange().getValues();
+    var data = getAllData(sheetName);
     var maxNum = 0;
-    for (var i = 1; i < data.length; i++) {
-      var id = data[i][0];
+    for (var i = 0; i < data.length; i++) {
+      var id = data[i][Object.keys(data[i])[0]] || '';
       if (id && id.toString().startsWith(prefix)) {
         var num = parseInt(id.toString().replace(prefix + '-', ''), 10);
         if (!isNaN(num) && num > maxNum) maxNum = num;
@@ -178,13 +177,13 @@ function generateId(sheetName, prefix) {
 
 function generateJobCardNo() {
   try {
-    var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
-    var data = sheet.getDataRange().getValues();
+    var data = getAllData(CONFIG.SHEET_NAMES.JOBCARDS);
     var currentYear = new Date().getFullYear();
     var prefix = 'JC-' + currentYear + '-';
     var maxNum = 0;
-    for (var i = 1; i < data.length; i++) {
-      var id = data[i][0];
+    for (var i = 0; i < data.length; i++) {
+      var keys = Object.keys(data[i]);
+      var id = keys.length > 0 ? data[i][keys[0]] : '';
       if (id && id.toString().indexOf(prefix) === 0) {
         var numPart = id.toString().replace(prefix, '');
         var num = parseInt(numPart, 10);

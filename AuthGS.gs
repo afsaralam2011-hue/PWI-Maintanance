@@ -445,12 +445,13 @@ function deleteUser(email) {
 }
 
 function generateUserId() {
-  var sheet = getSheet(CONFIG.SHEET_NAMES.USERS);
-  var data = sheet.getDataRange().getValues();
+  var data = getAllData(CONFIG.SHEET_NAMES.USERS);
   var max = 0;
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0]) {
-      var num = parseInt(String(data[i][0]).replace('USR', ''), 10);
+  for (var i = 0; i < data.length; i++) {
+    var keys = Object.keys(data[i]);
+    var id = keys.length > 0 ? data[i][keys[0]] : '';
+    if (id) {
+      var num = parseInt(String(id).replace('USR', ''), 10);
       if (!isNaN(num) && num > max) max = num;
     }
   }
