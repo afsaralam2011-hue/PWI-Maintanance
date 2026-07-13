@@ -189,6 +189,14 @@ function getRowCount(sheetName) {
   return data.length > 1 ? data.length - 1 : 0;
 }
 
+function sanitizeSheetValue(key, val) {
+  var durationFields = ['WaitingTime', 'WorkingTime', 'Downtime', 'TotalDuration'];
+  if (durationFields.indexOf(key) !== -1 && typeof val === 'number') {
+    return durationToDisplay(val);
+  }
+  return val;
+}
+
 function addRow(sheetName, data) {
   var sheet = getSheet(sheetName);
   var headers = sheet.getDataRange().getValues()[0];
@@ -196,7 +204,7 @@ function addRow(sheetName, data) {
   console.log('addRow(' + sheetName + '): headers=' + JSON.stringify(headers) + ', data keys=' + Object.keys(data).join(','));
   var row = [];
   for (var i = 0; i < headers.length; i++) {
-    row.push(data[headers[i]] || '');
+    row.push(sanitizeSheetValue(headers[i], data[headers[i]]) || '');
   }
   Logger.log('addRow(' + sheetName + '): appending row=' + JSON.stringify(row));
   console.log('addRow(' + sheetName + '): appending row=' + JSON.stringify(row));
@@ -217,11 +225,17 @@ function updateRow(sheetName, idField, idValue, data) {
   var headers = values[0];
   var idCol = headers.indexOf(idField);
   if (idCol === -1) return getAllData(sheetName);
-  for (var i = 1; i < values.length; i++) {
-    if (String(values[i][idCol]) === String(idValue)) {
+  // Convert numeric durations to readable strings before writing to sheet
+  var durationFields = ['WaitingTime', 'WorkingTime', 'Downtime', 'TotalDuration'];
+  for (var r = 1; r < values.length; r++) {
+    if (String(values[r][idCol]) === String(idValue)) {
       for (var j = 0; j < headers.length; j++) {
         if (data.hasOwnProperty(headers[j])) {
-          sheet.getRange(i + 1, j + 1).setValue(data[headers[j]]);
+          var val = data[headers[j]];
+          if (durationFields.indexOf(headers[j]) !== -1 && typeof val === 'number') {
+            val = durationToDisplay(val);
+          }
+          sheet.getRange(r + 1, j + 1).setValue(val);
         }
       }
       break;
@@ -235,7 +249,7 @@ function updateRowByIndex(sheetName, rowIndex, data) {
   var headers = sheet.getDataRange().getValues()[0];
   for (var j = 0; j < headers.length; j++) {
     if (data.hasOwnProperty(headers[j])) {
-      sheet.getRange(rowIndex + 1, j + 1).setValue(data[headers[j]]);
+      sheet.getRange(rowIndex + 1, j + 1).setValue(sanitizeSheetValue(headers[j], data[headers[j]]));
     }
   }
   return getAllData(sheetName);
@@ -385,7 +399,7 @@ function appendRows(sheetName, rows) {
   for (var i = 0; i < rows.length; i++) {
     var row = [];
     for (var j = 0; j < headers.length; j++) {
-      row.push(rows[i][headers[j]] || '');
+      row.push(sanitizeSheetValue(headers[j], rows[i][headers[j]]) || '');
     }
     sheet.appendRow(row);
     SpreadsheetApp.flush();

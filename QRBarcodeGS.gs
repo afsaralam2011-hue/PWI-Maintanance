@@ -19,7 +19,8 @@ function generateQRCodeForRecord(module, recordId) {
   if (!cfg) return null;
   var record = getRecordById(cfg.sheet, cfg.idField, recordId);
   if (!record) return null;
-  var qrContent = 'https://cmms.app/' + module.toLowerCase().replace(/\s+/g, '') + '/' + encodeURIComponent(recordId);
+  var appUrl = ScriptApp.getService().getUrl();
+  var qrContent = appUrl + '?qr=' + module.toLowerCase() + '&id=' + encodeURIComponent(recordId);
   var now = getCurrentTimestamp();
   var updateData = { QRCode: qrContent, QRGeneratedDate: now, UpdatedBy: Session.getActiveUser().getEmail(), UpdatedAt: now };
   updateRow(cfg.sheet, cfg.idField, recordId, updateData);
@@ -46,7 +47,8 @@ function generateQRBarcodeForNewRecord(module, recordId, record) {
     var cfg = getQRModuleSheet(module);
     if (!cfg) return;
     var code = record[cfg.codeField] || recordId;
-    var qrContent = 'https://cmms.app/' + module.toLowerCase().replace(/\s+/g, '') + '/' + encodeURIComponent(recordId);
+  var appUrl = ScriptApp.getService().getUrl();
+  var qrContent = appUrl + '?qr=' + module.toLowerCase() + '&id=' + encodeURIComponent(recordId);
     var barcode = String(code).replace(/[^A-Za-z0-9]/g, '') + '-' + String(Math.floor(Math.random() * 9000) + 1000);
     var now = getCurrentTimestamp();
     var updateData = { QRCode: qrContent, Barcode: barcode, QRGeneratedDate: now, UpdatedBy: Session.getActiveUser().getEmail(), UpdatedAt: now };
@@ -619,7 +621,7 @@ function buildJobCardDetail(detail, jobCardNo) {
   detail.finalRemarks = njc.FinalRemarks || '';
   detail.closeDate = njc.CloseDateTime || '';
   detail.closedBy = njc.ClosedBy || '';
-  detail.waitingTime = njc.WaitingTime || '';
+  detail.waitingTime = (typeof njc.WaitingTime === 'number' && njc.WaitingTime > 0) ? durationToDisplay(njc.WaitingTime) : (njc.WaitingTime || '');
   detail.workingTime = njc.WorkingTime || '';
   detail.downtime = njc.Downtime || '';
   detail.totalDuration = njc.TotalDuration || '';

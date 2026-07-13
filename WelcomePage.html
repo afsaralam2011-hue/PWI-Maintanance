@@ -881,6 +881,10 @@
       if (wsLoaded) return;
       wsLoaded = true;
       if (wsTimer) { clearTimeout(wsTimer); wsTimer = null; }
+      // Preserve QR scan URL parameters across page load
+      if (window.location.search && window.location.search.indexOf('qr=') !== -1) {
+        localStorage.setItem('cmms_qr_url', window.location.href);
+      }
       var btn = document.getElementById('wsBtn');
       if (btn) {
         btn.disabled = true;
@@ -921,7 +925,7 @@
       var bar = document.getElementById('wsProgressBar');
       var loadingText = document.getElementById('wsLoadingText');
       if (!bar) return;
-      var duration = 2800, start = Date.now();
+      var duration = 1500, start = Date.now();
 
       function tick() {
         var elapsed = Date.now() - start;

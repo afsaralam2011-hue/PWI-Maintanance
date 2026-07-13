@@ -391,14 +391,11 @@ function saveJobCard(e) {
       showToast('\u2705 Job Card Saved Successfully', 'success');
       refreshAllBadges();
       refreshDashboardCounters();
-      if (typeof jcActiveTab !== 'undefined') jcActiveTab = 'all';
-      if (typeof jcPage !== 'undefined') jcPage = 1;
-      navigateTo('jobcards');
-      if (typeof loadJobCardsData === 'function') {
-        loadJobCardsData();
-        if (newJobCardNo) {
-          setTimeout(function() { highlightJobCardRow(newJobCardNo); }, 500);
-        }
+      // Stay on Open Job Card page, reset form for next entry
+      var form = document.getElementById('createJobCardForm');
+      if (form) form.reset();
+      if (typeof refreshCommonDropdowns === 'function') {
+        refreshCommonDropdowns();
       }
     })
     .withFailureHandler(function(err) {
@@ -410,7 +407,9 @@ function saveJobCard(e) {
 }
 
 function cancelOpenForm() {
-  navigateTo('jobcards');
+  // Reset form and stay on Open Job Card page
+  var form = document.getElementById('createJobCardForm');
+  if (form) form.reset();
 }
 
 function highlightJobCardRow(jobNo) {

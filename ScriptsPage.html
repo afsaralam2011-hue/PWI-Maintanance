@@ -93,7 +93,14 @@ function showApp() {
   startClock();
   initLiveTimers();
   startSessionMonitor();
-  navigateTo('dashboard');
+  // Restore last active page from localStorage or default to dashboard
+  var lastPage = localStorage.getItem('cmms_last_page');
+  var validPages = Object.keys(window.__loadFnMap || {}).concat(['dashboard', 'assets', 'technicians', 'departments', 'sections', 'users', 'machines', 'openjobcard', 'breakdown', 'notifications', 'email', 'whatsapp', 'reports', 'backuprestore', 'settings', 'checklists']);
+  if (lastPage && validPages.indexOf(lastPage) !== -1 && lastPage !== 'dashboard') {
+    navigateTo(lastPage);
+  } else {
+    navigateTo('dashboard');
+  }
   setTimeout(function() { runFrontendDiagnostic('showApp'); }, 500);
   checkQRUrlParameter();
 }
@@ -301,6 +308,8 @@ function navigateTo(page) {
     return;
   }
   currentPage = page;
+  // Save last active page for session persistence
+  try { localStorage.setItem('cmms_last_page', page); } catch(e) {}
   document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
   document.querySelectorAll('.sidebar-item').forEach(function(i) { i.classList.remove('active'); });
 
@@ -1312,11 +1321,21 @@ function getCachedQR(qrContent) {
    ======================================================== */
 function checkQRUrlParameter() {
   try {
+    // First check if QR URL was preserved in localStorage (from WelcomePage redirect)
+    var savedQrUrl = localStorage.getItem('cmms_qr_url');
+    if (savedQrUrl) {
+      localStorage.removeItem('cmms_qr_url');
+      processQRScanResult(savedQrUrl);
+      return;
+    }
+    // Check current URL for ?qr= parameter
     var params = new URLSearchParams(window.location.search);
     var qrParam = params.get('qr');
     if (qrParam) {
-      var decoded = decodeURIComponent(qrParam);
-      processQRScanResult(decoded);
+      // Pass the FULL URL to processQRScanResult so scanQRCode can match
+      // against the stored QRCode value in the sheet
+      var fullUrl = window.location.origin + window.location.pathname + window.location.search;
+      processQRScanResult(fullUrl);
       if (window.history && window.history.replaceState) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
@@ -2594,49 +2613,11 @@ function diagnoseDataPipeline() {
 }
 
 (function() {
-  console.log('IIFE startup: checking localStorage for cmms_user');
-  var stored = localStorage.getItem('cmms_user');
-  if (stored) {
-    console.log('IIFE: found stored user, parsing and validating session');
-    currentUser = JSON.parse(stored);
-    var email = currentUser && currentUser.email ? currentUser.email : '';
-    google.script.run
-      .withSuccessHandler(function(result) {
-        console.log('IIFE: validateAppSession returned:', result);
-        if (result && result.valid) {
-          console.log('IIFE: session valid, showing app');
-          var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'none';
-          var appContainer = document.getElementById('appContainer'); if (appContainer) appContainer.style.display = 'flex';
-          applyTheme();
-          updateUserInfo();
-          initSidebar();
-          loadNotifications();
-          startNotificationRefresh();
-          loadEmailPanelData();
-          startEmailPanelRefresh();
-          startClock();
-          initLiveTimers();
-          startAutoRefresh();
-          startSessionMonitor();
-          navigateTo('dashboard');
-          setTimeout(function() { runFrontendDiagnostic('post-navigate'); }, 500);
-        } else {
-          console.log('IIFE: session invalid, clearing stored user');
-          localStorage.removeItem('cmms_user');
-          currentUser = null;
-          var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'block';
-        }
-      })
-      .withFailureHandler(function(err) {
-        console.error('IIFE: validateAppSession FAILED:', err);
-        localStorage.removeItem('cmms_user');
-        currentUser = null;
-        var loginPage = document.getElementById('loginPage'); if (loginPage) loginPage.style.display = 'block';
-      })
-      .validateAppSession(email);
-  } else {
-    console.log('IIFE: no stored user found, showing login page');
-  }
+  console.log('IIFE startup: always showing login page, auto-login disabled');
+  localStorage.removeItem('cmms_user');
+  currentUser = null;
+  var loginPage = document.getElementById('loginPage');
+  if (loginPage) loginPage.style.display = 'block';
 })();
 
 function initMultiSelect(wrapperId, options) {
