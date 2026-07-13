@@ -72,7 +72,13 @@
 
         <div class="form-group">
           <label>Initial Remarks</label>
-          <textarea name="InitialRemarks" class="form-control" rows="3" placeholder="Initial assessment and observations..."></textarea>
+          <textarea name="InitialRemarks" id="startJcInitialRemarks" class="form-control" rows="3" placeholder="Initial assessment and observations..."></textarea>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addVoiceButton('startJcInitialRemarks')" style="font-size:11px;padding:3px 8px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+              Voice Input
+            </button>
+          </div>
         </div>
 
         <div style="margin-bottom:0">
@@ -183,6 +189,7 @@ function openStartJc(id) {
   if (startJcTimer) clearInterval(startJcTimer);
   startJcTimer = setInterval(updateStartJcWaiting, 10000);
   showModal('startJcModal');
+  setTimeout(function() { addVoiceButton('startJcInitialRemarks'); }, 100);
 }
 
 function updateStartJcWaiting() {
@@ -221,6 +228,14 @@ function saveStartJc(e) {
     return;
   }
   if (startJcTimer) { clearInterval(startJcTimer); startJcTimer = null; }
+
+  if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+    OfflineSync.add({ fn: 'updateJobCard', args: [id, data] });
+    showToast('Saved offline — will sync when connected', 'warning');
+    hideModal('startJcModal');
+    return;
+  }
+
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(result) {

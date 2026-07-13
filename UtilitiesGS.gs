@@ -177,5 +177,25 @@ function generateId(sheetName, prefix) {
 }
 
 function generateJobCardNo() {
-  return generateId(CONFIG.SHEET_NAMES.JOBCARDS, CONFIG.ID_PREFIXES.JOBCARD);
+  try {
+    var sheet = getSheet(CONFIG.SHEET_NAMES.JOBCARDS);
+    var data = sheet.getDataRange().getValues();
+    var currentYear = new Date().getFullYear();
+    var prefix = 'JC-' + currentYear + '-';
+    var maxNum = 0;
+    for (var i = 1; i < data.length; i++) {
+      var id = data[i][0];
+      if (id && id.toString().indexOf(prefix) === 0) {
+        var numPart = id.toString().replace(prefix, '');
+        var num = parseInt(numPart, 10);
+        if (!isNaN(num) && num > maxNum) maxNum = num;
+      }
+    }
+    var nextNum = maxNum + 1;
+    var padded = ('000000' + nextNum).slice(-6);
+    return prefix + padded;
+  } catch(e) {
+    var fallbackYear = new Date().getFullYear();
+    return 'JC-' + fallbackYear + '-000001';
+  }
 }

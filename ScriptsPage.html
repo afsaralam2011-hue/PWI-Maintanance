@@ -152,6 +152,7 @@ function updateUserInfo() {
     else if (page === 'reports') { show = isAdmin || hasPermission('viewReports'); }
     else if (page === 'audit') { show = isAdmin || currentUser.role === 'Department Manager' || currentUser.role === 'Maintenance Manager'; }
     else if (page === 'qr') { show = true; }
+    else if (page === 'qrmachines' || page === 'qrassets' || page === 'qrspareparts' || page === 'qrjobcards' || page === 'qrprint' || page === 'qrhistory') { show = true; }
     else if (page === 'email') { show = isAdmin; }
     else if (page === 'whatsapp') { show = isAdmin; }
     else if (page === 'backuprestore') { show = isAdmin; }
@@ -291,6 +292,12 @@ function navigateTo(page) {
     stockhistory: 'Stock History', goodsreceipt: 'Goods Receipt', pmhistory: 'PM History', notifications: 'Notifications',
     breakdown: 'Breakdown History', audit: 'Audit Trail',
     qr: 'QR & Barcode Center',
+    qrmachines: 'Machine QR Management',
+    qrassets: 'Asset QR Management',
+    qrspareparts: 'Spare Parts QR Management',
+    qrjobcards: 'Job Card QR Management',
+    qrprint: 'Print QR Labels',
+    qrhistory: 'QR Scan History',
     email: 'Email Notification Settings',
     reports: 'Reports', backuprestore: 'Backup & Restore', settings: 'Settings', openjobcard: 'Open Job Card',
     users: 'Users',
@@ -317,6 +324,12 @@ function navigateTo(page) {
     notifications: 'loadNotificationsData',
     audit: 'loadAuditLogsData',
     qr: 'loadQRBarcodeData',
+    qrmachines: 'loadQRMachines',
+    qrassets: 'loadQRAssets',
+    qrspareparts: 'loadQRSpareParts',
+    qrjobcards: 'loadQRJobCards',
+    qrprint: 'loadQRPrint',
+    qrhistory: 'loadQRHistory',
     email: 'loadEmailSettingsData',
     users: 'loadUsersData',
     whatsapp: 'loadWhatsAppData',
@@ -827,27 +840,172 @@ function showQRDetail(result) {
 
   var color = moduleColors[result.module] || '#6366f1';
   var icon = moduleIcons[result.module] || '';
-
   var rows = '';
-  rows += '<div class="qr-detail-row"><span class="qr-detail-label">' + (result.module === 'Job Card' ? 'Job Card No' : 'ID') + '</span><span class="qr-detail-value">' + escapeHtml(result.id || '') + '</span></div>';
-  rows += '<div class="qr-detail-row"><span class="qr-detail-label">' + (result.module === 'Job Card' ? 'Machine' : 'Name') + '</span><span class="qr-detail-value">' + escapeHtml(result.name || '') + '</span></div>';
-  if (result.code && result.code !== result.id) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Code</span><span class="qr-detail-value">' + escapeHtml(result.code || '') + '</span></div>';
-  if (result.department) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Department</span><span class="qr-detail-value">' + escapeHtml(result.department || '') + '</span></div>';
-  if (result.location) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Location</span><span class="qr-detail-value">' + escapeHtml(result.location || '') + '</span></div>';
-  if (result.section) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Section</span><span class="qr-detail-value">' + escapeHtml(result.section || '') + '</span></div>';
-  if (result.status) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Status</span><span class="qr-detail-value"><span class="badge badge-' + (result.status === 'Active' ? 'success' : 'warning') + '">' + escapeHtml(result.status) + '</span></span></div>';
-  if (result.type) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Type</span><span class="qr-detail-value">' + escapeHtml(result.type || '') + '</span></div>';
-  if (result.manufacturer) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Manufacturer</span><span class="qr-detail-value">' + escapeHtml(result.manufacturer || '') + '</span></div>';
-  if (result.model) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Model</span><span class="qr-detail-value">' + escapeHtml(result.model || '') + '</span></div>';
-  if (result.criticality) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Criticality</span><span class="qr-detail-value">' + escapeHtml(result.criticality || '') + '</span></div>';
-  if (result.lastBreakdown) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Last Breakdown</span><span class="qr-detail-value">' + escapeHtml(result.lastBreakdown || '') + '</span></div>';
-  if (result.lastPM) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Last PM</span><span class="qr-detail-value">' + escapeHtml(result.lastPM || '') + '</span></div>';
-  if (result.openJobCards !== undefined) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Open Job Cards</span><span class="qr-detail-value" style="color:' + (result.openJobCards > 0 ? 'var(--danger)' : 'var(--success)') + ';font-weight:700">' + result.openJobCards + '</span></div>';
-  if (result.priority) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Priority</span><span class="qr-detail-value"><span class="badge badge-' + (result.priority === 'Critical' ? 'danger' : result.priority === 'High' ? 'warning' : 'info') + '">' + escapeHtml(result.priority || '') + '</span></span></div>';
-  if (result.complaintDescription) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Description</span><span class="qr-detail-value" style="max-width:70%;text-align:right;font-size:12px">' + escapeHtml((result.complaintDescription || '').substring(0, 100)) + '</span></div>';
-  if (result.technician) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Technician</span><span class="qr-detail-value">' + escapeHtml(result.technician || '') + '</span></div>';
-  if (result.category) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Category</span><span class="qr-detail-value">' + escapeHtml(result.category || '') + '</span></div>';
-  if (result.cost) rows += '<div class="qr-detail-row"><span class="qr-detail-label">Cost</span><span class="qr-detail-value">$' + escapeHtml(String(result.cost || '0')) + '</span></div>';
+  var statsHtml = '';
+  var historyHtml = '';
+  var purchaseHtml = '';
+
+  if (result.module === 'Machine') {
+    rows += buildDetailRow('Machine ID', result.id);
+    rows += buildDetailRow('Machine Name', result.name);
+    if (result.code && result.code !== result.id) rows += buildDetailRow('Machine Code', result.code);
+    rows += buildDetailRow('Department', result.department);
+    rows += buildDetailRow('Section', result.section);
+    rows += buildDetailRow('Location', result.location);
+    rows += buildDetailRow('Type', result.type);
+    rows += buildDetailRow('Manufacturer', result.manufacturer);
+    rows += buildDetailRow('Model', result.model);
+    rows += buildDetailRow('Serial No', result.serialNo);
+    rows += buildDetailRow('Criticality', result.criticality);
+    rows += buildDetailRow('Capacity', result.capacity);
+    rows += buildDetailRow('Power Rating', result.powerRating);
+    rows += buildDetailRow('Install Date', result.installDate);
+    rows += buildDetailRow('Warranty Expiry', result.warrantyExpiry);
+    rows += buildDetailRow('Status', result.status);
+    statsHtml = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--danger)">' + (result.openJobCards || 0) + '</div><div style="font-size:10px;color:var(--text-secondary)">Open Jobs</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--primary)">' + (result.totalBreakdowns || 0) + '</div><div style="font-size:10px;color:var(--text-secondary)">Total Breakdowns</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--warning)">' + (result.totalDowntimeHours || 0) + 'h</div><div style="font-size:10px;color:var(--text-secondary)">Downtime Hours</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--success)">' + (result.pmStatus || '-') + '</div><div style="font-size:10px;color:var(--text-secondary)">PM Status</div></div>' +
+      '</div>';
+    if (result.history && result.history.length > 0) {
+      historyHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
+      historyHtml += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Recent Job Cards (' + result.history.length + ')</div>';
+      result.history.forEach(function(h) {
+        var st = (h.status || '').toUpperCase();
+        var stClass = st === 'CLOSED' ? 'success' : st === 'RUNNING' ? 'running' : st === 'APPROVED' ? 'success' : 'info';
+        historyHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-size:11px;border-bottom:1px solid var(--border);border-radius:4px;margin-bottom:2px">';
+        historyHtml += '<div><span style="font-weight:600">' + escapeHtml(h.jobCardNo) + '</span>';
+        historyHtml += '<span style="color:var(--text-muted);margin-left:6px">' + escapeHtml(h.description || '').substring(0, 40) + '</span></div>';
+        historyHtml += '<span class="badge badge-' + stClass + '" style="font-size:9px;white-space:nowrap">' + escapeHtml(h.status) + '</span>';
+        historyHtml += '</div>';
+      });
+      historyHtml += '</div>';
+    }
+  } else if (result.module === 'Asset') {
+    rows += buildDetailRow('Asset ID', result.id);
+    rows += buildDetailRow('Asset Name', result.name);
+    if (result.code && result.code !== result.id) rows += buildDetailRow('Asset Code', result.code);
+    rows += buildDetailRow('Type', result.type);
+    rows += buildDetailRow('Category', result.category);
+    rows += buildDetailRow('Machine', result.machineName);
+    rows += buildDetailRow('Department', result.department);
+    rows += buildDetailRow('Section', result.section);
+    rows += buildDetailRow('Location', result.location);
+    rows += buildDetailRow('Manufacturer', result.manufacturer);
+    rows += buildDetailRow('Model', result.model);
+    rows += buildDetailRow('Serial No', result.serialNo);
+    rows += buildDetailRow('Criticality', result.criticality);
+    rows += buildDetailRow('Cost', result.cost ? '$' + result.cost : '');
+    rows += buildDetailRow('Purchase Date', result.purchaseDate);
+    rows += buildDetailRow('Install Date', result.installDate);
+    rows += buildDetailRow('Warranty Expiry', result.warrantyExpiry);
+    rows += buildDetailRow('Supplier', result.supplier);
+    rows += buildDetailRow('Specification', result.specification);
+    rows += buildDetailRow('Status', result.status);
+    if (result.totalJobs !== undefined) {
+      statsHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">' +
+        '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--danger)">' + (result.openJobs || 0) + '</div><div style="font-size:10px;color:var(--text-secondary)">Open Jobs</div></div>' +
+        '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--primary)">' + (result.totalJobs || 0) + '</div><div style="font-size:10px;color:var(--text-secondary)">Total Jobs</div></div>' +
+        '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--success)">' + (result.totalJobs - (result.openJobs || 0)) + '</div><div style="font-size:10px;color:var(--text-secondary)">Completed</div></div>' +
+        '</div>';
+    }
+    if (result.history && result.history.length > 0) {
+      historyHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
+      historyHtml += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Job History</div>';
+      result.history.forEach(function(h) {
+        var st = (h.status || '').toUpperCase();
+        var stClass = st === 'CLOSED' ? 'success' : st === 'RUNNING' ? 'running' : 'info';
+        historyHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-size:11px;border-bottom:1px solid var(--border)">';
+        historyHtml += '<span style="font-weight:600">' + escapeHtml(h.jobCardNo) + '</span>';
+        historyHtml += '<span class="badge badge-' + stClass + '" style="font-size:9px">' + escapeHtml(h.status) + '</span>';
+        historyHtml += '</div>';
+      });
+      historyHtml += '</div>';
+    }
+  } else if (result.module === 'Job Card') {
+    rows += buildDetailRow('Job Card No', result.id);
+    rows += buildDetailRow('Machine', result.name);
+    rows += buildDetailRow('Status', result.currentStatus || result.status);
+    rows += buildDetailRow('Priority', result.priority);
+    rows += buildDetailRow('Complaint Category', result.complaintCategory);
+    rows += buildDetailRow('Department', result.department);
+    rows += buildDetailRow('Section', result.section);
+    rows += buildDetailRow('Complaint By', result.complaintBy);
+    rows += buildDetailRow('Description', result.complaintDescription);
+    rows += buildDetailRow('Open Date & Time', result.openDate);
+    rows += buildDetailRow('Assigned Technician', result.assignedTechnician);
+    rows += buildDetailRow('Maintenance Team', result.maintenanceTeam);
+    rows += buildDetailRow('Start Date & Time', result.startDateTime);
+    rows += buildDetailRow('Initial Remarks', result.initialRemarks);
+    rows += buildDetailRow('Root Cause', result.rootCause);
+    rows += buildDetailRow('Corrective Action', result.correctiveAction);
+    rows += buildDetailRow('Spare Parts Used', result.spareParts);
+    rows += buildDetailRow('Final Remarks', result.finalRemarks);
+    rows += buildDetailRow('Closed By', result.closedBy);
+    rows += buildDetailRow('Close Date & Time', result.closeDate);
+    rows += buildDetailRow('Waiting Time', result.waitingTime);
+    rows += buildDetailRow('Working Time', result.workingTime);
+    rows += buildDetailRow('Total Downtime', result.downtime);
+    rows += buildDetailRow('Breakdown Type', result.breakdownType);
+    rows += buildDetailRow('Approval Status', result.approvalStatus);
+    rows += buildDetailRow('Approved By', result.approvedBy);
+    rows += buildDetailRow('QR Generated', result.qrGeneratedDate);
+    rows += buildDetailRow('Created By', result.createdBy);
+  } else if (result.module === 'Spare Part') {
+    rows += buildDetailRow('Part Code', result.id);
+    rows += buildDetailRow('Part Name', result.name);
+    rows += buildDetailRow('Category', result.category);
+    rows += buildDetailRow('Manufacturer', result.manufacturer);
+    rows += buildDetailRow('Unit', result.unit);
+    rows += buildDetailRow('Current Stock', result.currentStock);
+    rows += buildDetailRow('Minimum Stock', result.minimumStock);
+    rows += buildDetailRow('Maximum Stock', result.maximumStock);
+    rows += buildDetailRow('Reorder Level', result.reorderLevel);
+    rows += buildDetailRow('Unit Cost', result.unitCost ? '$' + result.unitCost : '');
+    rows += buildDetailRow('Supplier', result.supplier);
+    rows += buildDetailRow('Store Location', result.location);
+    rows += buildDetailRow('Bin Number', result.binNumber);
+    rows += buildDetailRow('Machine Compatibility', result.machineCompatibility);
+    rows += buildDetailRow('Stock Status', result.stockStatus);
+    rows += buildDetailRow('Status', result.status);
+    var stockColor = 'var(--success)';
+    if (result.stockStatus === 'Low Stock') stockColor = 'var(--warning)';
+    else if (result.stockStatus === 'Out of Stock') stockColor = 'var(--danger)';
+    statsHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:' + stockColor + '">' + (result.currentStock || 0) + '</div><div style="font-size:10px;color:var(--text-secondary)">In Stock</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--primary)">' + (result.usedInJobCount || 0) + '</div><div style="font-size:10px;color:var(--text-secondary)">Used In Jobs</div></div>' +
+      '<div style="text-align:center;padding:8px;background:var(--bg-input);border-radius:var(--radius-sm)"><div style="font-size:20px;font-weight:700;color:var(--success)">' + (result.totalPurchased || 0) + '</div><div style="font-size:10px;color:var(--text-secondary)">Total Purchased</div></div>' +
+      '</div>';
+    if (result.usedInJobs && result.usedInJobs.length > 0) {
+      historyHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
+      historyHtml += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Used In Job Cards</div>';
+      result.usedInJobs.forEach(function(h) {
+        historyHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-size:11px;border-bottom:1px solid var(--border)">';
+        historyHtml += '<div><span style="font-weight:600">' + escapeHtml(h.jobCardNo) + '</span> <span style="color:var(--text-muted)">' + escapeHtml(h.machine || '') + '</span></div>';
+        historyHtml += '<span class="badge badge-' + ((h.status || '').toUpperCase() === 'CLOSED' ? 'success' : 'info') + '" style="font-size:9px">' + escapeHtml(h.status) + '</span>';
+        historyHtml += '</div>';
+      });
+      historyHtml += '</div>';
+    }
+    if (result.purchaseHistory && result.purchaseHistory.length > 0) {
+      purchaseHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
+      purchaseHtml += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Purchase History</div>';
+      result.purchaseHistory.forEach(function(p) {
+        purchaseHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-size:11px;border-bottom:1px solid var(--border)">';
+        purchaseHtml += '<div><span style="font-weight:600">' + escapeHtml(p.grnNo) + '</span> <span style="color:var(--text-muted)">' + escapeHtml(p.supplier || '') + '</span></div>';
+        purchaseHtml += '<span style="font-weight:500">Qty: ' + escapeHtml(String(p.quantity)) + '</span>';
+        purchaseHtml += '</div>';
+      });
+      purchaseHtml += '</div>';
+    }
+  }
+
+  var statusBadge = '';
+  if (result.status) {
+    var stCls = (result.status || '').toLowerCase() === 'active' ? 'success' : (result.status || '').toLowerCase() === 'inactive' ? 'danger' : 'warning';
+    statusBadge = ' <span class="badge badge-' + stCls + '" style="font-size:10px">' + escapeHtml(result.status) + '</span>';
+  }
 
   var actions = '';
   if (result.module === 'Machine') {
@@ -862,41 +1020,34 @@ function showQRDetail(result) {
   }
   actions += '<button class="btn btn-secondary" onclick="closeQRDetail()">Close</button>';
 
-  var historyHtml = '';
-  if (result.history && result.history.length > 0) {
-    historyHtml = '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">';
-    historyHtml += '<div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Recent History</div>';
-    result.history.forEach(function(h) {
-      var statusClass = (h.status || '').toUpperCase() === 'CLOSED' ? 'success' : (h.status || '').toUpperCase() === 'RUNNING' ? 'running' : 'info';
-      historyHtml += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11px;border-bottom:1px solid var(--border)">';
-      historyHtml += '<span style="color:var(--text);font-weight:500">' + escapeHtml(h.jobCardNo || '') + '</span>';
-      historyHtml += '<span class="badge badge-' + statusClass + '" style="font-size:9px">' + escapeHtml(h.status || '') + '</span>';
-      historyHtml += '</div>';
-    });
-    historyHtml += '</div>';
-  }
-
   var overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.id = 'qrDetailOverlay';
   overlay.innerHTML =
-    '<div class="qr-detail-card" onclick="event.stopPropagation()">' +
+    '<div class="qr-detail-card" onclick="event.stopPropagation()" style="max-width:560px;width:95vw;max-height:85vh;overflow-y:auto">' +
       '<div class="qr-detail-header">' +
         '<div class="qr-detail-icon" style="background:' + color + '22;color:' + color + '">' + icon + '</div>' +
-        '<div>' +
+        '<div style="flex:1">' +
           '<div class="qr-detail-title">' + escapeHtml(result.name || result.id) + '</div>' +
-          '<div class="qr-detail-subtitle">' + escapeHtml(result.module) + ' &middot; ' + escapeHtml(result.id || '') + '</div>' +
+          '<div class="qr-detail-subtitle">' + escapeHtml(result.module) + ' &middot; ' + escapeHtml(result.id || '') + statusBadge + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="qr-detail-rows">' + rows + '</div>' +
+      statsHtml +
       historyHtml +
-      '<div class="qr-detail-actions">' + actions + '</div>' +
+      purchaseHtml +
+      '<div class="qr-detail-actions" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">' + actions + '</div>' +
     '</div>';
   overlay.style.display = 'flex';
   overlay.style.alignItems = 'center';
   overlay.style.justifyContent = 'center';
   overlay.onclick = function() { closeQRDetail(); };
   document.body.appendChild(overlay);
+}
+
+function buildDetailRow(label, value) {
+  if (!value && value !== 0) return '';
+  return '<div class="qr-detail-row"><span class="qr-detail-label">' + escapeHtml(label) + '</span><span class="qr-detail-value">' + escapeHtml(String(value)) + '</span></div>';
 }
 
 function closeQRDetail() {
@@ -2125,7 +2276,7 @@ function openFullImage(url) {
 
 function escapeHtml(str) {
   if (!str) return '';
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 
 var globalDashboardFilter = 'today';
@@ -2258,7 +2409,7 @@ function runFrontendDiagnostic(context) {
                  'pendingjobcardPage',
                   'checklistsPage', 'pmPage', 'sparepartsPage', 
                  'inventorytransactionsPage', 'stockhistoryPage', 'goodsreceiptPage', 'pmhistoryPage', 'notificationsPage',
-                 'breakdownPage', 'reportsPage', 'settingsPage', 'auditPage', 'qrPage', 'emailPage'];
+                 'breakdownPage', 'reportsPage', 'settingsPage', 'auditPage', 'qrPage', 'qrmachinesPage', 'qrassetsPage', 'qrsparepartsPage', 'qrjobcardsPage', 'qrprintPage', 'qrhistoryPage', 'emailPage'];
   var missing = [];
   pageIds.forEach(function(id) {
     if (!document.getElementById(id)) missing.push(id);
@@ -2498,4 +2649,388 @@ function initMultiSelect(wrapperId, options) {
     close: closeDropdown
   };
 }
+
+/* ===== PART 9: CAMERA PHOTO CAPTURE ===== */
+function capturePhoto(inputId, opts) {
+  opts = opts || {};
+  var input = document.getElementById(inputId);
+  if (!input) {
+    input = document.createElement('input');
+    input.type = 'file';
+    input.id = inputId;
+    input.accept = 'image/*';
+    input.capture = opts.capture || 'environment';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+  }
+  input.accept = 'image/*';
+  if (opts.capture) input.setAttribute('capture', opts.capture);
+  else input.removeAttribute('capture');
+  return new Promise(function(resolve) {
+    input.onchange = function(e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return resolve(null);
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image must be under 5MB', 'warning');
+        return resolve(null);
+      }
+      var reader = new FileReader();
+      reader.onload = function(ev) {
+        var img = new Image();
+        img.onload = function() {
+          var maxW = opts.maxWidth || 1200;
+          var maxH = opts.maxHeight || 900;
+          var w = img.width, h = img.height;
+          if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+          if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          var quality = opts.quality || 0.8;
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+    input.value = '';
+    input.click();
+  });
+}
+
+function showCameraMenu(targetId, opts) {
+  opts = opts || {};
+  var overlay = document.createElement('div');
+  overlay.className = 'modal-overlay show';
+  overlay.style.zIndex = '2000';
+  overlay.innerHTML =
+    '<div class="modal" style="max-width:340px;margin:auto">' +
+      '<div class="modal-header"><div class="modal-title">' + (opts.title || 'Capture Photo') + '</div>' +
+      '<button class="modal-close" onclick="this.closest(\'.modal-overlay\').remove()">&times;</button></div>' +
+      '<div class="modal-body" style="display:flex;flex-direction:column;gap:12px">' +
+        '<button class="btn btn-primary btn-block" style="min-height:52px;font-size:15px;justify-content:center" onclick="this.closest(\'.modal-overlay\').remove();startCameraCapture(\'' + targetId + '\',\'camera\',' + JSON.stringify(JSON.stringify(opts)) + ')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
+          ' Take Photo' +
+        '</button>' +
+        '<button class="btn btn-secondary btn-block" style="min-height:52px;font-size:15px;justify-content:center" onclick="this.closest(\'.modal-overlay\').remove();startCameraCapture(\'' + targetId + '\',\'gallery\',' + JSON.stringify(JSON.stringify(opts)) + ')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+          ' Choose from Gallery' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+}
+
+function startCameraCapture(targetId, mode, optsStr) {
+  var opts = {};
+  try { opts = JSON.parse(optsStr); } catch(e) {}
+  var cameraMap = {
+    'jcFaultImageInput': 'jcCameraInput',
+    'closeRepairImageInput': 'closeRepairCameraInput'
+  };
+  var galleryInput = document.getElementById(targetId);
+  var cameraInputId = cameraMap[targetId];
+  var cameraInput = cameraInputId ? document.getElementById(cameraInputId) : null;
+  if (mode === 'camera' && cameraInput) {
+    cameraInput.click();
+  } else if (galleryInput) {
+    galleryInput.click();
+  }
+}
+
+function removeCapturedPhoto(targetId) {
+  var preview = document.getElementById(targetId + 'Preview');
+  if (preview) { preview.innerHTML = ''; preview.style.display = 'none'; }
+  var placeholder = document.getElementById(targetId + 'Placeholder');
+  if (placeholder) placeholder.style.display = '';
+  var hiddenInput = document.getElementById(targetId);
+  if (hiddenInput) hiddenInput.value = '';
+}
+
+/* ===== PART 10: VOICE-TO-TEXT INPUT ===== */
+function startVoiceInput(textareaId) {
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast('Voice input is not supported in this browser', 'warning');
+    return;
+  }
+  var textarea = document.getElementById(textareaId);
+  if (!textarea) return;
+  if (textarea._voiceActive) {
+    textarea._voiceRecognition.stop();
+    textarea._voiceActive = false;
+    setVoiceBtnState(textareaId, false);
+    return;
+  }
+  var recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+  textarea._voiceRecognition = recognition;
+  textarea._voiceActive = true;
+  setVoiceBtnState(textareaId, true);
+  var finalTranscript = textarea.value || '';
+  var interimDiv = document.getElementById(textareaId + '_interim');
+  if (!interimDiv) {
+    interimDiv = document.createElement('div');
+    interimDiv.id = textareaId + '_interim';
+    interimDiv.style.cssText = 'font-size:11px;color:var(--primary);padding:4px 0;min-height:16px;font-style:italic';
+    textarea.parentNode.insertBefore(interimDiv, textarea.nextSibling);
+  }
+  recognition.onresult = function(event) {
+    var interim = '';
+    for (var i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        finalTranscript += (finalTranscript && !finalTranscript.endsWith(' ') ? ' ' : '') + event.results[i][0].transcript;
+      } else {
+        interim += event.results[i][0].transcript;
+      }
+    }
+    textarea.value = finalTranscript;
+    interimDiv.textContent = interim ? 'Hearing: ' + interim : '';
+  };
+  recognition.onerror = function(event) {
+    if (event.error !== 'no-speech') {
+      showToast('Voice input error: ' + event.error, 'warning');
+    }
+    textarea._voiceActive = false;
+    setVoiceBtnState(textareaId, false);
+    if (interimDiv) interimDiv.textContent = '';
+  };
+  recognition.onend = function() {
+    textarea._voiceActive = false;
+    setVoiceBtnState(textareaId, false);
+    if (interimDiv) interimDiv.textContent = '';
+  };
+  recognition.start();
+  showToast('Listening... Tap the mic again to stop', 'info');
+}
+
+function setVoiceBtnState(textareaId, active) {
+  var btn = document.querySelector('[data-voice="' + textareaId + '"]');
+  if (!btn) return;
+  if (active) {
+    btn.style.background = 'var(--danger)';
+    btn.style.color = '#fff';
+    btn.title = 'Stop listening';
+    btn.classList.add('voice-recording');
+  } else {
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.title = 'Voice input';
+    btn.classList.remove('voice-recording');
+  }
+}
+
+function addVoiceButton(textareaId, container) {
+  var textarea = document.getElementById(textareaId);
+  if (!textarea) return;
+  if (textarea.parentNode.querySelector('[data-voice="' + textareaId + '"]')) return;
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:relative;display:inline-block;width:100%';
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.setAttribute('data-voice', textareaId);
+  btn.title = 'Voice input';
+  btn.style.cssText = 'position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg-input);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;transition:all 0.2s ease';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+  btn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); startVoiceInput(textareaId); };
+  textarea.style.paddingRight = '44px';
+  textarea.parentNode.insertBefore(btn, textarea.nextSibling);
+}
+
+/* ===== PART 12: OFFLINE SYNC QUEUE ===== */
+var OfflineSync = (function() {
+  var QUEUE_KEY = 'cmms_offline_queue';
+  var isOnline = navigator.onLine;
+
+  function getQueue() {
+    try { return JSON.parse(localStorage.getItem(QUEUE_KEY)) || []; }
+    catch(e) { return []; }
+  }
+  function saveQueue(q) {
+    try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch(e) {}
+  }
+  function add(action) {
+    var q = getQueue();
+    q.push({ action: action.fn, args: action.args || [], timestamp: Date.now(), id: 'off-' + Date.now() + '-' + Math.floor(Math.random()*1000) });
+    saveQueue(q);
+    updateOfflineBadge();
+  }
+  function processQueue() {
+    if (!navigator.onLine) return;
+    var q = getQueue();
+    if (q.length === 0) return;
+    var item = q.shift();
+    saveQueue(q);
+    updateOfflineBadge();
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      var fn = google.script.run;
+      if (fn[item.action]) {
+        var call = fn[item.action];
+        item.args.forEach(function(a) { call = call.withArgs(a); });
+        call.withSuccessHandler(function() { processQueue(); })
+            .withFailureHandler(function() { q.unshift(item); saveQueue(q); updateOfflineBadge(); });
+      } else {
+        processQueue();
+      }
+    } else {
+      q.unshift(item); saveQueue(q); updateOfflineBadge();
+    }
+  }
+  function updateOfflineBadge() {
+    var q = getQueue();
+    var badge = document.getElementById('offlineBadge');
+    if (!badge) {
+      if (q.length > 0) {
+        badge = document.createElement('span');
+        badge.id = 'offlineBadge';
+        badge.style.cssText = 'position:fixed;bottom:80px;right:14px;z-index:9998;padding:6px 12px;border-radius:20px;background:var(--warning);color:#000;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px;box-shadow:var(--shadow-lg)';
+        document.body.appendChild(badge);
+      }
+    }
+    if (q.length > 0) {
+      badge.textContent = q.length + ' pending sync';
+      badge.style.display = 'flex';
+    } else if (badge) {
+      badge.remove();
+    }
+  }
+  window.addEventListener('online', function() {
+    isOnline = true;
+    var banner = document.getElementById('offlineBanner');
+    if (banner) banner.style.display = 'none';
+    processQueue();
+    showToast('Back online - syncing data...', 'success');
+  });
+  window.addEventListener('offline', function() {
+    isOnline = false;
+    var banner = document.getElementById('offlineBanner');
+    if (banner) banner.style.display = 'flex';
+    showToast('You are offline. Changes will be saved locally.', 'warning');
+  });
+  return { add: add, processQueue: processQueue, isOnline: function() { return navigator.onLine; }, getCount: function() { return getQueue().length; } };
+})();
+
+/* ===== PART 14: REQUEST DEDUP & PERFORMANCE ===== */
+var RequestDedup = (function() {
+  var pending = {};
+  function dedup(key, fn, delay) {
+    if (pending[key]) clearTimeout(pending[key]);
+    pending[key] = setTimeout(function() {
+      delete pending[key];
+      fn();
+    }, delay || 300);
+  }
+  return { dedup: dedup };
+})();
+
+function memoize(fn) {
+  var cache = {};
+  return function() {
+    var key = Array.prototype.join.call(arguments, '|');
+    if (cache[key] !== undefined) return cache[key];
+    var result = fn.apply(this, arguments);
+    cache[key] = result;
+    return result;
+  };
+}
+
+/* ===== PART 13: MOBILE BOTTOM NAVIGATION ===== */
+function initMobileBottomNav() {
+  if (document.getElementById('mobileBottomNav')) return;
+  var nav = document.createElement('div');
+  nav.id = 'mobileBottomNav';
+  nav.style.cssText = 'display:none;position:fixed;bottom:0;left:0;right:0;z-index:999;background:var(--bg-card);border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,6px);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)';
+  var items = [
+    { page: 'dashboard', label: 'Home', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' },
+    { page: 'jobcards', label: 'Jobs', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' },
+    { page: 'scan', label: 'Scan', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>' },
+    { page: 'machines', label: 'Machines', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>' },
+    { page: 'notifications', label: 'Alerts', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>' }
+  ];
+  var html = '<div style="display:flex;align-items:center;justify-content:space-around">';
+  items.forEach(function(item) {
+    var isScan = item.page === 'scan';
+    html += '<div onclick="' + (isScan ? 'openQRScanner()' : 'navigateTo(\'' + item.page + '\')') + '" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 8px;border-radius:8px;transition:all 0.2s ease;min-width:52px">' +
+      '<div class="mbnav-icon" style="width:22px;height:22px;color:var(--text-muted);transition:all 0.2s ease">' + item.icon + '</div>' +
+      '<span style="font-size:10px;color:var(--text-muted);font-weight:500;transition:all 0.2s ease">' + item.label + '</span>' +
+    '</div>';
+  });
+  html += '</div>';
+  nav.innerHTML = html;
+  document.body.appendChild(nav);
+
+  function updateBottomNav() {
+    var isMobile = window.innerWidth <= 768;
+    nav.style.display = isMobile ? 'block' : 'none';
+    var mc = document.querySelector('.main-content');
+    if (mc) mc.style.paddingBottom = isMobile ? '72px' : '';
+  }
+  updateBottomNav();
+  window.addEventListener('resize', updateBottomNav);
+
+  nav.querySelectorAll('[onclick]').forEach(function(el) {
+    el.addEventListener('click', function() {
+      nav.querySelectorAll('.mbnav-icon').forEach(function(icon) { icon.style.color = 'var(--text-muted)'; });
+      el.querySelector('.mbnav-icon').style.color = 'var(--primary)';
+    });
+  });
+}
+
+function highlightBottomNavItem(page) {
+  var nav = document.getElementById('mobileBottomNav');
+  if (!nav) return;
+  nav.querySelectorAll('[onclick]').forEach(function(el) {
+    var icon = el.querySelector('.mbnav-icon');
+    var label = el.querySelector('span');
+    if (el.getAttribute('onclick').indexOf("'" + page + "'") !== -1 || (page === 'scan' && el.getAttribute('onclick').indexOf('openQRScanner') !== -1)) {
+      if (icon) icon.style.color = 'var(--primary)';
+      if (label) label.style.color = 'var(--primary)';
+    } else {
+      if (icon) icon.style.color = 'var(--text-muted)';
+      if (label) label.style.color = 'var(--text-muted)';
+    }
+  });
+}
+
+/* ===== PWA PUSH NOTIFICATION STUB ===== */
+function requestPushPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendLocalNotification(title, body, url) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    var n = new Notification(title, { body: body, icon: '?img=logo&size=192', tag: 'cmms-' + Date.now() });
+    n.onclick = function() { window.focus(); if (url) window.location.hash = url; };
+  } catch(e) {}
+}
+
+/* ===== HOOK NAVIGATE TO BOTTOM NAV ===== */
+var _origNavigateTo = typeof navigateTo === 'function' ? navigateTo : null;
+(function() {
+  var origNav = navigateTo;
+  window.navigateTo = function(page) {
+    origNav(page);
+    highlightBottomNavItem(page);
+  };
+})();
+
+/* ===== AUTO-INIT ===== */
+document.addEventListener('DOMContentLoaded', function() {
+  initMobileBottomNav();
+  requestPushPermission();
+
+  var banner = document.createElement('div');
+  banner.id = 'offlineBanner';
+  banner.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;z-index:10001;background:var(--danger);color:#fff;text-align:center;padding:8px 16px;font-size:13px;font-weight:600;letter-spacing:0.3px';
+  banner.textContent = 'You are offline — changes will sync when connected';
+  document.body.appendChild(banner);
+});
 </script>

@@ -66,6 +66,7 @@ function initializeSystem() {
   initSettingsSheet();
   initAuditTrailSheet();
   initQRBarcodeData();
+  initQRHistorySheet();
   emailInitLogsSheet();
   logActivity('System Init', 'All sheets initialized successfully');
   createAuditLog(CONFIG.AUDIT_MODULES.SETTINGS, CONFIG.AUDIT_ACTIONS.CREATE, '', 'System Initialized', '', 'All sheets initialized', 'Success', 'System initialization completed');

@@ -100,7 +100,13 @@
           </div>
           <div class="form-group">
             <label>Root Cause *</label>
-            <input type="text" name="RootCause" class="form-control" placeholder="Root cause of failure" required>
+            <input type="text" name="RootCause" id="closeJcRootCause" class="form-control" placeholder="Root cause of failure" required>
+            <div style="display:flex;gap:6px;margin-top:4px">
+              <button type="button" class="btn btn-sm btn-secondary" onclick="addVoiceButton('closeJcRootCause')" style="font-size:11px;padding:3px 8px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+                Voice Input
+              </button>
+            </div>
           </div>
         </div>
 
@@ -113,22 +119,35 @@
 
         <div class="form-group">
           <label>Corrective Action *</label>
-          <textarea name="CorrectiveAction" class="form-control" rows="3" placeholder="Actions performed to resolve the issue..." required></textarea>
+          <textarea name="CorrectiveAction" id="closeJcCorrectiveAction" class="form-control" rows="3" placeholder="Actions performed to resolve the issue..." required></textarea>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addVoiceButton('closeJcCorrectiveAction')" style="font-size:11px;padding:3px 8px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+              Voice Input
+            </button>
+          </div>
         </div>
 
         <div class="form-group">
           <label>Final Remarks</label>
-          <textarea name="FinalRemarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+          <textarea name="FinalRemarks" id="closeJcFinalRemarks" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="addVoiceButton('closeJcFinalRemarks')" style="font-size:11px;padding:3px 8px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+              Voice Input
+            </button>
+          </div>
         </div>
 
         <div class="form-group">
           <label>Repair Image</label>
           <div class="image-upload-area" id="closeRepairImageArea">
             <input type="file" accept="image/*" id="closeRepairImageInput" style="display:none" onchange="handleRepairImageSelect(event)">
+            <input type="file" accept="image/*" capture="environment" id="closeRepairCameraInput" style="display:none" onchange="handleRepairImageSelect(event)">
             <input type="hidden" name="RepairImage" id="closeRepairImageData">
-            <div class="upload-placeholder" onclick="var el=document.getElementById('closeRepairImageInput');el&&el.click()">
+            <div class="upload-placeholder" onclick="showCameraMenu('closeRepairImageInput',{title:'Repair Photo',capture:'environment'})" style="flex-direction:column;gap:8px">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              <span>Click to upload Repair Image</span>
+              <span>Tap to Upload or Take Photo</span>
               <small>Supports: JPG, PNG, WEBP (max 5MB)</small>
             </div>
             <div class="image-preview" id="closeRepairImagePreview" style="display:none">
@@ -239,6 +258,11 @@ function openCloseJc(id) {
   if (closeJcTimer) clearInterval(closeJcTimer);
   closeJcTimer = setInterval(updateCloseJcTimeSummary, 10000);
   showModal('closeJcModal');
+  setTimeout(function() {
+    addVoiceButton('closeJcCorrectiveAction');
+    addVoiceButton('closeJcFinalRemarks');
+    addVoiceButton('closeJcRootCause');
+  }, 100);
 }
 
 function updateCloseJcTimeSummary() {
@@ -305,6 +329,14 @@ function saveCloseJc(e) {
     return;
   }
   if (closeJcTimer) { clearInterval(closeJcTimer); closeJcTimer = null; }
+
+  if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
+    OfflineSync.add({ fn: 'updateJobCard', args: [id, data] });
+    showToast('Saved offline — will sync when connected', 'warning');
+    hideModal('closeJcModal');
+    return;
+  }
+
   showLoading(true);
   google.script.run
     .withSuccessHandler(function(result) {

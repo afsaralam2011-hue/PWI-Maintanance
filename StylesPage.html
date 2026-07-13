@@ -2062,6 +2062,26 @@
     to { transform: translateY(0); }
   }
 
+  /* ===== VOICE RECORDING ANIMATION ===== */
+  .voice-recording { animation: voicePulse 1s ease-in-out infinite; }
+  @keyframes voicePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+  }
+
+  /* ===== MOBILE BOTTOM NAV ===== */
+  @media (max-width: 768px) {
+    #mobileBottomNav { display: block !important; }
+    .main-content { padding-bottom: 72px !important; }
+    .page-content { padding-bottom: 16px; }
+    .modal { max-height: 80vh; margin-bottom: 0; }
+    .scan-qr-btn { min-height: 48px; font-size: 15px; }
+    .filter-btn { min-height: 40px; }
+  }
+  @media (min-width: 769px) {
+    #mobileBottomNav { display: none !important; }
+  }
+
   /* ===== SCAN QR BUTTON ===== */
   .scan-qr-btn {
     display: inline-flex; align-items: center; gap: 6px;

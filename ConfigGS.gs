@@ -24,7 +24,8 @@ var CONFIG = {
     AUDIT_TRAIL: 'AuditTrail',
     EMAIL_LOGS: 'EmailLogs',
     MAINTENANCE_TEAMS: 'MaintenanceTeams',
-    BREAKDOWN_TYPES: 'BreakdownTypes'
+    BREAKDOWN_TYPES: 'BreakdownTypes',
+    QR_HISTORY: 'QRHistory'
   },
 
   STATUS: {
@@ -438,10 +439,17 @@ var CONFIG = {
     SETTINGS_CHANGED: 'Settings Changed',
     QR_GENERATED: 'QR Generated',
     BARCODE_GENERATED: 'Barcode Generated',
-    LABEL_PRINTED: 'Label Printed'
+    LABEL_PRINTED: 'Label Printed',
+    QR_SCANNED: 'QR Scanned'
   },
 
   QR_MODULES: ['Machine', 'Asset', 'Spare Part', 'Job Card'],
+
+  QR_HISTORY_FIELDS: [
+    'ScanID', 'ScanDateTime', 'UserEmail', 'UserName', 'UserDepartment',
+    'QRModule', 'RecordID', 'RecordName', 'ScanResult', 'DeviceType',
+    'BrowserInfo', 'IPAddress', 'Latitude', 'Longitude', 'Action'
+  ],
 
   QR_LABEL_SIZES: {
     SMALL: '50x25mm',

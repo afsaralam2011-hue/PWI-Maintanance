@@ -3,61 +3,43 @@
   <div class="page-header">
     <h2><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg> QR &amp; Barcode Center</h2>
   </div>
-
   <div class="qr-summary" id="qrSummaryCards">
     <div class="stat-card stat-primary"><div class="stat-inner"><div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg></div><div class="stat-info"><h3 id="qrStatGenerated">0</h3><p>QR Generated</p></div></div></div>
     <div class="stat-card stat-warning"><div class="stat-inner"><div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="stat-info"><h3 id="qrStatPending">0</h3><p>Pending</p></div></div></div>
-    <div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-info"><h3 id="qrStatPrinted">0</h3><p>Labels Printed</p></div></div></div>
+    <div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-info"><h3 id="qrStatScanned">0</h3><p>Times Scanned</p></div></div></div>
   </div>
-
   <div class="qr-controls">
     <div class="qr-tabs" id="qrModuleTabs">
-      <button class="qr-tab active" data-module="Machine" onclick="switchQRModule('Machine', this)">Machines</button>
-      <button class="qr-tab" data-module="Asset" onclick="switchQRModule('Asset', this)">Assets</button>
-      <button class="qr-tab" data-module="Spare Part" onclick="switchQRModule('Spare Part', this)">Spare Parts</button>
-      <button class="qr-tab" data-module="Job Card" onclick="switchQRModule('Job Card', this)">Job Cards</button>
+      <button class="qr-tab active" onclick="loadQRBarcodeData()">Overview</button>
+      <button class="qr-tab" onclick="navigateTo('qrmachines')">Machines</button>
+      <button class="qr-tab" onclick="navigateTo('qrassets')">Assets</button>
+      <button class="qr-tab" onclick="navigateTo('qrspareparts')">Spare Parts</button>
+      <button class="qr-tab" onclick="navigateTo('qrjobcards')">Job Cards</button>
+      <button class="qr-tab" onclick="navigateTo('qrprint')">Print Labels</button>
+      <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
     </div>
     <div class="qr-actions">
       <button class="filter-btn btn-primary" onclick="bulkGenerateQR()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg> Bulk Generate QR</button>
-      <button class="filter-btn btn-success" onclick="bulkGenerateBarcode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M2 4h2v16H2zM6 4h1v16H6zM9 4h2v16H9zM13 4h1v16h-1zM16 4h2v16h-2zM20 4h2v16h-2z"/></svg> Bulk Generate Barcode</button>
+      <button class="filter-btn btn-success" onclick="bulkGenerateBarcode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M2 4h2v16H2zM6 4h1v16H6zM9 4h2v16H9zM13 4h1v16h-1zM16 4h2v16h-2zM20 4h2v16h-2z"/></svg> Bulk Barcode</button>
       <button class="filter-btn btn-info" onclick="showQRScanDialog()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M1 7V4a3 3 0 0 1 3-3h3M1 17v3a3 3 0 0 0 3 3h3M23 17v3a3 3 0 0 1-3 3h-3M23 7V4a3 3 0 0 0-3-3h-3"/></svg> Scan</button>
     </div>
   </div>
-
   <div class="qr-search-bar">
     <input type="text" id="qrSearchInput" placeholder="Search by name, code or ID..." onkeyup="filterQRTable()">
     <select id="qrStatusFilter" onchange="filterQRTable()"><option value="">All Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
     <select id="qrQRFilter" onchange="filterQRTable()"><option value="">QR: All</option><option value="generated">Generated</option><option value="pending">Pending</option></select>
   </div>
-
   <div class="qr-table-wrap" id="qrTableWrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>ID / Code</th>
-          <th>Name</th>
-          <th>Department</th>
-          <th>QR Code</th>
-          <th>Barcode</th>
-          <th>QR Generated</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="qrTableBody">
-        <tr><td colspan="9" class="qr-empty">Loading...</td></tr>
-      </tbody>
-    </table>
+    <table><thead><tr>
+      <th>#</th><th>ID / Code</th><th>Name</th><th>Module</th><th>QR Code</th><th>Barcode</th><th>Generated</th><th>Actions</th>
+    </tr></thead><tbody id="qrTableBody"><tr><td colspan="8" class="qr-empty">Loading...</td></tr></tbody></table>
   </div>
-
   <div class="page-footer-actions">
     <div class="page-info" id="qrPageInfo">Showing 0 records</div>
   </div>
 </div>
-
 <div class="modal-overlay" id="qrScanModal" style="display:none" onclick="if(event.target===this)closeQRScanDialog()">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:520px">
     <div class="modal-header"><h3>Scan QR / Barcode</h3><button class="modal-close" onclick="closeQRScanDialog()">&times;</button></div>
     <div class="modal-body" style="padding:20px">
       <div style="margin-bottom:14px">
@@ -66,13 +48,13 @@
       </div>
       <div style="display:flex;gap:8px">
         <button class="filter-btn btn-primary" onclick="processQRScan()" style="flex:1">Look Up</button>
+        <button class="filter-btn btn-info" onclick="openQRScannerFromDialog()" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Camera</button>
         <button class="filter-btn btn-secondary" onclick="closeQRScanDialog()">Cancel</button>
       </div>
       <div id="qrScanResult" style="margin-top:12px"></div>
     </div>
   </div>
 </div>
-
 <div class="modal-overlay" id="qrLabelModal" style="display:none" onclick="if(event.target===this)closeQRLabelDialog()">
   <div class="modal" style="max-width:600px">
     <div class="modal-header"><h3>Print Label</h3><button class="modal-close" onclick="closeQRLabelDialog()">&times;</button></div>
@@ -80,72 +62,59 @@
       <div style="margin-bottom:14px">
         <label style="display:block;font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px">Label Size</label>
         <select id="qrLabelSize" style="width:100%;padding:8px 10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px">
-          <option value="50x25mm">50 × 25 mm</option>
-          <option value="75x50mm" selected>75 × 50 mm</option>
-          <option value="100x50mm">100 × 50 mm</option>
-          <option value="A4 Multiple">A4 Multiple Labels</option>
+          <option value="50x25mm">50 x 25 mm (Small)</option>
+          <option value="75x50mm" selected>75 x 50 mm (Medium)</option>
+          <option value="100x50mm">100 x 50 mm (Large)</option>
+          <option value="A4 Multiple">A4 Multiple Labels (8 per page)</option>
         </select>
       </div>
       <div id="qrLabelPreview" style="display:flex;justify-content:center;padding:16px;background:#fff;border-radius:var(--radius-sm);margin-bottom:14px;min-height:120px;align-items:center;color:#999">Select label size to preview</div>
       <div style="display:flex;gap:8px">
-        <button class="filter-btn btn-primary" onclick="printQRLabel()" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>
+        <button class="filter-btn btn-primary" onclick="printQRLabel()" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>
         <button class="filter-btn btn-secondary" onclick="closeQRLabelDialog()">Cancel</button>
       </div>
     </div>
   </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 var currentQRModule = 'Machine';
-var qrModuleData = [];
+var qrAllData = [];
 var qrFilteredData = [];
 var qrLabelRecordId = null;
 
 function loadQRBarcodeData() {
   loadQRStatistics();
-  loadQRModuleData('Machine');
+  loadAllQRModules();
 }
 
 function loadQRStatistics() {
-  google.script.run
-    .withSuccessHandler(function(stats) {
-      var el = document.getElementById('qrStatGenerated'); if (el) el.textContent = stats.generated || 0;
-      var el2 = document.getElementById('qrStatPending'); if (el2) el2.textContent = stats.pending || 0;
-      var el3 = document.getElementById('qrStatPrinted'); if (el3) el3.textContent = stats.printed || 0;
-    })
-    .withFailureHandler(function() {})
-    .getQRStatistics();
+  google.script.run.withSuccessHandler(function(s) {
+    var el = document.getElementById('qrStatGenerated'); if (el) el.textContent = s.generated || 0;
+    var el2 = document.getElementById('qrStatPending'); if (el2) el2.textContent = s.pending || 0;
+    var el3 = document.getElementById('qrStatScanned'); if (el3) el3.textContent = s.scanned || 0;
+  }).withFailureHandler(function(){}).getQRStatistics();
 }
 
-function loadQRModuleData(module) {
-  currentQRModule = module;
-  var el = document.getElementById('qrTableBody'); if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">Loading...</td></tr>';
-  google.script.run
-    .withSuccessHandler(function(records) {
-      qrModuleData = records || [];
-      filterQRTable();
-    })
-    .withFailureHandler(function() {
-      var el = document.getElementById('qrTableBody'); if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">Error loading data</td></tr>';
-    })
-    .getQRModuleRecords(module);
-}
-
-function switchQRModule(module, btn) {
-  document.querySelectorAll('.qr-tab').forEach(function(t) { t.classList.remove('active'); });
-  if (btn) btn.classList.add('active');
-  var el = document.getElementById('qrSearchInput'); if (el) el.value = '';
-  var el2 = document.getElementById('qrStatusFilter'); if (el2) el2.value = '';
-  var el3 = document.getElementById('qrQRFilter'); if (el3) el3.value = '';
-  loadQRModuleData(module);
+function loadAllQRModules() {
+  var el = document.getElementById('qrTableBody'); if (el) el.innerHTML = '<tr><td colspan="8" class="qr-empty">Loading all modules...</td></tr>';
+  qrAllData = [];
+  var modules = ['Machine', 'Asset', 'Spare Part', 'Job Card'];
+  var loaded = 0;
+  modules.forEach(function(mod) {
+    google.script.run.withSuccessHandler(function(records) {
+      (records || []).forEach(function(r) { r.module = mod; qrAllData.push(r); });
+      loaded++;
+      if (loaded === modules.length) filterQRTable();
+    }).withFailureHandler(function() { loaded++; if (loaded === modules.length) filterQRTable(); }).getQRModuleRecords(mod);
+  });
 }
 
 function filterQRTable() {
   var search = (document.getElementById('qrSearchInput').value || '').toLowerCase();
   var status = document.getElementById('qrStatusFilter').value;
   var qrFilter = document.getElementById('qrQRFilter').value;
-  qrFilteredData = qrModuleData.filter(function(r) {
+  qrFilteredData = qrAllData.filter(function(r) {
     if (search && (r.name || '').toLowerCase().indexOf(search) === -1 && (r.id || '').toLowerCase().indexOf(search) === -1 && (r.code || '').toLowerCase().indexOf(search) === -1) return false;
     if (status && r.status !== status) return false;
     if (qrFilter === 'generated' && !r.qrCode) return false;
@@ -158,75 +127,70 @@ function filterQRTable() {
 function renderQRTable() {
   var tbody = document.getElementById('qrTableBody');
   if (!qrFilteredData.length) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="qr-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg><br>No records found</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="qr-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg><br>No records found</td></tr>';
     var pi = document.getElementById('qrPageInfo'); if (pi) pi.textContent = 'Showing 0 records';
     return;
   }
   var html = '';
+  var modColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
   for (var i = 0; i < qrFilteredData.length; i++) {
     var r = qrFilteredData[i];
-    var hasQR = r.qrCode ? true : false;
-    var hasBarcode = r.barcode ? true : false;
-    var statusBadge = r.status === 'Active' ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Inactive</span>';
+    var modTag = '<span style="background:' + (modColors[r.module] || '#999') + '22;color:' + (modColors[r.module] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span>';
     html += '<tr>';
     html += '<td>' + (i + 1) + '</td>';
     html += '<td><span class="mono">' + escapeHtml(r.code) + '</span></td>';
     html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
-    html += '<td>' + escapeHtml(r.department || '') + '</td>';
-    html += '<td class="qr-cell">' + (hasQR ? '<span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span>' : '<button class="btn-xs btn-primary" onclick="generateSingleQR(\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
-    html += '<td class="qr-cell">' + (hasBarcode ? '<span class="mono-sm">' + escapeHtml(r.barcode) + '</span>' : '<button class="btn-xs btn-success" onclick="generateSingleBarcode(\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
-    html += '<td class="muted">' + (r.qrGeneratedDate ? r.qrGeneratedDate : '-') + '</td>';
-    html += '<td>' + statusBadge + '</td>';
+    html += '<td>' + modTag + '</td>';
+    html += '<td class="qr-cell">' + (r.qrCode ? '<span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span>' : '<button class="btn-xs btn-primary" onclick="generateSingleQR(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
+    html += '<td class="qr-cell">' + (r.barcode ? '<span class="mono-sm">' + escapeHtml(r.barcode) + '</span>' : '<button class="btn-xs btn-success" onclick="generateSingleBarcode(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
+    html += '<td class="muted">' + (r.qrGeneratedDate || '-') + '</td>';
     html += '<td class="qr-actions-cell">' +
-      (hasQR ? '<button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(r.id) + '\')" title="Print Label">&#128424;</button> ' : '') +
-      (hasQR ? '<button class="btn-xs btn-secondary" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')" title="View QR">&#128065;</button>' : '') +
-    '</td>';
-    html += '</tr>';
+      (r.qrCode ? '<button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')" title="Print Label">&#128424;</button> ' : '') +
+      (r.qrCode ? '<button class="btn-xs btn-secondary" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')" title="View QR">&#128065;</button>' : '') +
+    '</td></tr>';
   }
   if (tbody) tbody.innerHTML = html;
   var pi = document.getElementById('qrPageInfo'); if (pi) pi.textContent = 'Showing ' + qrFilteredData.length + ' records';
 }
 
-function generateSingleQR(id) {
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res) { loadQRModuleData(currentQRModule); loadQRStatistics(); showToast('QR code generated for ' + (res.name || id)); }
-    })
-    .withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); })
-    .generateQRCodeForRecord(currentQRModule, id);
+function generateSingleQR(mod, id) {
+  google.script.run.withSuccessHandler(function(res) {
+    if (res) { loadQRBarcodeData(); showToast('QR code generated for ' + (res.name || id)); }
+  }).withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); }).generateQRCodeForRecord(mod, id);
 }
 
-function generateSingleBarcode(id) {
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res) { loadQRModuleData(currentQRModule); loadQRStatistics(); showToast('Barcode generated for ' + (res.name || id)); }
-    })
-    .withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); })
-    .generateBarcodeForRecord(currentQRModule, id);
+function generateSingleBarcode(mod, id) {
+  google.script.run.withSuccessHandler(function(res) {
+    if (res) { loadQRBarcodeData(); showToast('Barcode generated for ' + (res.name || id)); }
+  }).withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); }).generateBarcodeForRecord(mod, id);
 }
 
 function bulkGenerateQR() {
-  if (!confirm('Generate QR codes for all records in ' + currentQRModule + ' without QR codes?')) return;
-  google.script.run
-    .withSuccessHandler(function(results) {
-      loadQRModuleData(currentQRModule);
-      loadQRStatistics();
-      showToast('Generated ' + results.length + ' QR codes');
-    })
-    .withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); })
-    .bulkGenerateQRCode(currentQRModule);
+  if (!confirm('Generate QR codes for all records without QR codes?')) return;
+  var modules = ['Machine', 'Asset', 'Spare Part', 'Job Card'];
+  var total = 0;
+  var done = 0;
+  modules.forEach(function(mod) {
+    google.script.run.withSuccessHandler(function(results) {
+      total += (results || []).length;
+      done++;
+      if (done === modules.length) { loadQRBarcodeData(); showToast('Generated ' + total + ' QR codes across all modules'); }
+    }).withFailureHandler(function() { done++; if (done === modules.length) { loadQRBarcodeData(); showToast('Generated ' + total + ' QR codes'); } }).bulkGenerateQRCode(mod);
+  });
 }
 
 function bulkGenerateBarcode() {
-  if (!confirm('Generate barcodes for all records in ' + currentQRModule + ' without barcodes?')) return;
-  google.script.run
-    .withSuccessHandler(function(results) {
-      loadQRModuleData(currentQRModule);
-      loadQRStatistics();
-      showToast('Generated ' + results.length + ' barcodes');
-    })
-    .withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); })
-    .bulkGenerateBarcode(currentQRModule);
+  if (!confirm('Generate barcodes for all records without barcodes?')) return;
+  var modules = ['Machine', 'Asset', 'Spare Part', 'Job Card'];
+  var total = 0;
+  var done = 0;
+  modules.forEach(function(mod) {
+    google.script.run.withSuccessHandler(function(results) {
+      total += (results || []).length;
+      done++;
+      if (done === modules.length) { loadQRBarcodeData(); showToast('Generated ' + total + ' barcodes across all modules'); }
+    }).withFailureHandler(function() { done++; if (done === modules.length) { loadQRBarcodeData(); showToast('Generated ' + total + ' barcodes'); } }).bulkGenerateBarcode(mod);
+  });
 }
 
 function previewQRCode(id, qrContent) {
@@ -236,7 +200,7 @@ function previewQRCode(id, qrContent) {
   overlay.onclick = function(e) { if (e.target === overlay) document.body.removeChild(overlay); };
   var box = document.createElement('div');
   box.style.cssText = 'background:#fff;padding:24px;border-radius:8px;text-align:center;max-width:340px';
-  box.innerHTML = '<div id="qrPreviewCanvas" style="margin:0 auto 12px;width:200px;height:200px"></div><div style="color:#333;font-size:13px;margin-bottom:8px;word-break:break-all">' + escapeHtml(qrContent) + '</div><button style="padding:6px 16px;border:none;border-radius:4px;background:#6366f1;color:#fff;cursor:pointer;font-size:12px" onclick="document.body.removeChild(this.parentNode.parentNode)">Close</button>';
+  box.innerHTML = '<div style="font-size:11px;color:#999;margin-bottom:8px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div id="qrPreviewCanvas" style="margin:0 auto 12px;width:200px;height:200px"></div><div style="color:#333;font-size:13px;margin-bottom:8px;word-break:break-all">' + escapeHtml(qrContent) + '</div><button style="padding:6px 16px;border:none;border-radius:4px;background:#6366f1;color:#fff;cursor:pointer;font-size:12px" onclick="document.body.removeChild(this.parentNode.parentNode)">Close</button>';
   overlay.appendChild(box);
   document.body.appendChild(overlay);
   setTimeout(function() {
@@ -246,8 +210,8 @@ function previewQRCode(id, qrContent) {
   }, 100);
 }
 
-function showQRLabelDialog(id) {
-  qrLabelRecordId = id;
+function showQRLabelDialog(mod, id) {
+  qrLabelRecordId = { module: mod, id: id };
   var el = document.getElementById('qrLabelModal'); if (el) el.style.display = 'flex';
   var el2 = document.getElementById('qrLabelPreview'); if (el2) el2.innerHTML = '<span style="color:#999">Loading preview...</span>';
   updateLabelPreview();
@@ -261,33 +225,30 @@ function closeQRLabelDialog() {
 function updateLabelPreview() {
   var size = document.getElementById('qrLabelSize').value;
   if (!qrLabelRecordId) return;
-  google.script.run
-    .withSuccessHandler(function(data) {
-      if (!data) { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:#999">No data</span>'; return; }
-      var preview = document.getElementById('qrLabelPreview');
-      var isMulti = (size === 'A4 Multiple');
-      if (preview) preview.innerHTML = '';
-      var labelCount = isMulti ? 8 : 1;
-      var container = document.createElement('div');
-      container.style.cssText = isMulti ? 'display:flex;flex-wrap:wrap;gap:4px;justify-content:center' : 'display:flex;flex-direction:column;align-items:center';
-      for (var i = 0; i < labelCount; i++) {
-        var label = document.createElement('div');
-        var w = isMulti ? '180px' : (size === '50x25mm' ? '200px' : size === '100x50mm' ? '400px' : '300px');
-        var h = isMulti ? '90px' : (size === '50x25mm' ? '100px' : size === '100x50mm' ? '200px' : '200px');
-        label.style.cssText = 'border:1px solid #333;padding:6px;font-family:Arial,sans-serif;width:' + w + ';height:' + h + ';display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:' + (isMulti ? '7px' : size === '50x25mm' ? '8px' : '10px') + ';background:#fff;color:#333;overflow:hidden';
-        label.innerHTML = '<div style="font-weight:bold;font-size:1.2em;margin-bottom:1px;">' + escapeHtml(data.name) + '</div><div style="color:#666;margin-bottom:1px;">' + escapeHtml(data.code) + '</div><div style="color:#888;font-size:0.85em;margin-bottom:2px;">' + escapeHtml(data.department || '') + '</div><div style="font-size:0.75em;color:#999;margin-bottom:2px;">' + escapeHtml(data.module) + '</div><div id="qrLabelImg' + i + '" style="margin:2px 0;width:60px;height:60px"></div><div style="font-family:monospace;font-size:0.85em;letter-spacing:1px;color:#555">' + escapeHtml(data.barcode || '') + '</div>';
-        container.appendChild(label);
-        setTimeout(function(idx) {
-          var el = document.getElementById('qrLabelImg' + idx);
-          if (el && typeof QRCode !== 'undefined') {
-            new QRCode(el, { text: data.qrContent, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
-          }
-        }, 200, i);
-      }
-      preview.appendChild(container);
-    })
-    .withFailureHandler(function() { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:#999">Error loading preview</span>'; })
-    .getPrintLabelData(currentQRModule, qrLabelRecordId, size);
+  google.script.run.withSuccessHandler(function(data) {
+    if (!data) { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:#999">No data</span>'; return; }
+    var preview = document.getElementById('qrLabelPreview');
+    var isMulti = (size === 'A4 Multiple');
+    if (preview) preview.innerHTML = '';
+    var labelCount = isMulti ? 8 : 1;
+    var container = document.createElement('div');
+    container.style.cssText = isMulti ? 'display:flex;flex-wrap:wrap;gap:4px;justify-content:center' : 'display:flex;flex-direction:column;align-items:center';
+    for (var i = 0; i < labelCount; i++) {
+      var label = document.createElement('div');
+      var w = isMulti ? '180px' : (size === '50x25mm' ? '200px' : size === '100x50mm' ? '400px' : '300px');
+      var h = isMulti ? '100px' : (size === '50x25mm' ? '100px' : size === '100x50mm' ? '200px' : '200px');
+      label.style.cssText = 'border:1px solid #333;padding:6px;font-family:Arial,sans-serif;width:' + w + ';height:' + h + ';display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:' + (isMulti ? '7px' : size === '50x25mm' ? '8px' : '10px') + ';background:#fff;color:#333;overflow:hidden';
+      label.innerHTML = '<div style="font-weight:bold;font-size:0.7em;color:#1a237e;letter-spacing:0.3px;margin-bottom:1px">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div><div style="font-weight:bold;font-size:1.2em;margin-bottom:1px;">' + escapeHtml(data.name) + '</div><div style="color:#666;margin-bottom:1px;">' + escapeHtml(data.code) + '</div><div style="color:#888;font-size:0.85em;margin-bottom:1px;">' + escapeHtml(data.module) + ' #' + escapeHtml(data.recordId) + '</div><div id="qrLabelImg' + i + '" style="margin:2px 0;width:60px;height:60px"></div><div style="font-family:monospace;font-size:0.85em;letter-spacing:1px;color:#555">' + escapeHtml(data.barcode || '') + '</div>';
+      container.appendChild(label);
+      setTimeout(function(idx) {
+        var el = document.getElementById('qrLabelImg' + idx);
+        if (el && typeof QRCode !== 'undefined') {
+          new QRCode(el, { text: data.qrContent, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+        }
+      }, 200, i);
+    }
+    preview.appendChild(container);
+  }).withFailureHandler(function() { var lp = document.getElementById('qrLabelPreview'); if (lp) lp.innerHTML = '<span style="color:#999">Error loading preview</span>'; }).getPrintLabelData(qrLabelRecordId.module, qrLabelRecordId.id, size);
 }
 
 var qrLabelSizeEl = document.getElementById('qrLabelSize'); if (qrLabelSizeEl) qrLabelSizeEl.addEventListener('change', updateLabelPreview);
@@ -295,94 +256,79 @@ var qrLabelSizeEl = document.getElementById('qrLabelSize'); if (qrLabelSizeEl) q
 function printQRLabel() {
   var size = document.getElementById('qrLabelSize').value;
   if (!qrLabelRecordId) return;
-  google.script.run
-    .withSuccessHandler(function(data) {
-      if (!data) { showToast('Error: No label data', 'error'); return; }
-      var isMulti = (size === 'A4 Multiple');
-      var labelCount = isMulti ? 8 : 1;
-      var printWindow = window.open('', '_blank', 'width=800,height=600');
-      var html = '<!DOCTYPE html><html><head><title>Print Label</title>';
-      html += '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>';
-      html += '<style>body{margin:0;padding:10px;font-family:Arial,sans-serif}';
-      html += '.label{border:1px solid #333;padding:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;';
-      if (isMulti) {
-        html += 'width:180px;height:90px;font-size:7px;float:left;margin:4px}';
-      } else if (size === '50x25mm') {
-        html += 'width:200px;height:100px;font-size:8px;margin:auto}';
-      } else if (size === '100x50mm') {
-        html += 'width:400px;height:200px;font-size:12px;margin:auto}';
-      } else {
-        html += 'width:300px;height:200px;font-size:10px;margin:auto}';
-      }
-      html += '.qr-wrap{margin:2px 0;display:flex;justify-content:center}';
-      html += '.barcode{font-family:monospace;font-size:0.85em;letter-spacing:1px;color:#555}';
-      html += '.name{font-weight:bold}';
-      html += '@media print{body{margin:0;padding:5px}.label{page-break-inside:avoid;border:1px solid #000}}';
-      html += '</style></head><body>';
-      html += '<div style="' + (isMulti ? '' : 'display:flex;flex-direction:column;align-items:center') + '">';
-      for (var i = 0; i < labelCount; i++) {
-        html += '<div class="label">';
-        html += '<div class="name" style="font-size:1.2em">' + escapeHtml(data.name) + '</div>';
-        html += '<div style="color:#666">' + escapeHtml(data.code) + '</div>';
-        html += '<div style="color:#888;font-size:0.85em">' + escapeHtml(data.department || '') + '</div>';
-        if (!isMulti) html += '<div style="font-size:0.75em;color:#999">' + escapeHtml(data.module) + '</div>';
-        html += '<div class="qr-wrap"><div id="qrImg' + i + '" style="width:60px;height:60px"></div></div>';
-        html += '<div class="barcode">' + escapeHtml(data.barcode || '') + '</div>';
-        html += '</div>';
-      }
+  google.script.run.withSuccessHandler(function(data) {
+    if (!data) { showToast('Error: No label data', 'error'); return; }
+    var isMulti = (size === 'A4 Multiple');
+    var labelCount = isMulti ? 8 : 1;
+    var printWindow = window.open('', '_blank', 'width=800,height=600');
+    var html = '<!DOCTYPE html><html><head><title>Print Label - Pakistan Wire Industries</title>';
+    html += '<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"><\/script>';
+    html += '<style>body{margin:0;padding:10px;font-family:Arial,sans-serif}';
+    html += '.label{border:1px solid #333;padding:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;';
+    if (isMulti) { html += 'width:180px;height:100px;font-size:7px;float:left;margin:4px}'; }
+    else if (size === '50x25mm') { html += 'width:200px;height:100px;font-size:8px;margin:auto}'; }
+    else if (size === '100x50mm') { html += 'width:400px;height:200px;font-size:12px;margin:auto}'; }
+    else { html += 'width:300px;height:200px;font-size:10px;margin:auto}'; }
+    html += '.qr-wrap{margin:2px 0;display:flex;justify-content:center}';
+    html += '.barcode{font-family:monospace;font-size:0.85em;letter-spacing:1px;color:#555}';
+    html += '.company{font-weight:bold;color:#1a237e;letter-spacing:0.3px}';
+    html += '@media print{body{margin:0;padding:5px}.label{page-break-inside:avoid;border:1px solid #000}}';
+    html += '</style></head><body>';
+    html += '<div style="' + (isMulti ? '' : 'display:flex;flex-direction:column;align-items:center') + '">';
+    for (var i = 0; i < labelCount; i++) {
+      html += '<div class="label">';
+      html += '<div class="company" style="font-size:0.75em">PAKISTAN WIRE INDUSTRIES (PVT.) LTD.</div>';
+      html += '<div style="font-weight:bold;font-size:1.2em">' + escapeHtml(data.name) + '</div>';
+      html += '<div style="color:#666">' + escapeHtml(data.code) + '</div>';
+      if (!isMulti) html += '<div style="font-size:0.75em;color:#999">' + escapeHtml(data.module) + ' #' + escapeHtml(data.recordId) + '</div>';
+      html += '<div class="qr-wrap"><div id="qrImg' + i + '" style="width:60px;height:60px"></div></div>';
+      html += '<div class="barcode">' + escapeHtml(data.barcode || '') + '</div>';
       html += '</div>';
-      html += '<script>window.onload=function(){';
-      html += 'var d=' + JSON.stringify(data) + ';';
-      html += 'for(var i=0;i<' + labelCount + ';i++){var el=document.getElementById("qrImg"+i);if(el&&typeof QRCode!=="undefined"){new QRCode(el,{text:d.qrContent,width:60,height:60,colorDark:"#000000",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H})}}';
-      html += 'setTimeout(function(){window.print();window.close()},500)';
-      html += '}<\/script>';
-      html += '</body></html>';
-      printWindow.document.write(html);
-      printWindow.document.close();
-      loadQRStatistics();
-      showToast('Label sent to printer');
-    })
-    .withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); })
-    .getPrintLabelData(currentQRModule, qrLabelRecordId, size);
+    }
+    html += '</div>';
+    html += '<script>window.onload=function(){';
+    html += 'var d=' + JSON.stringify(data) + ';';
+    html += 'for(var i=0;i<' + labelCount + ';i++){var el=document.getElementById("qrImg"+i);if(el&&typeof QRCode!=="undefined"){new QRCode(el,{text:d.qrContent,width:60,height:60,colorDark:"#000000",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H})}}';
+    html += 'setTimeout(function(){window.print();window.close()},500)';
+    html += '}<\/script>';
+    html += '</body></html>';
+    printWindow.document.write(html);
+    printWindow.document.close();
+    loadQRStatistics();
+    showToast('Label sent to printer');
+  }).withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); }).getPrintLabelData(qrLabelRecordId.module, qrLabelRecordId.id, size);
 }
 
 function showQRScanDialog() {
   var el = document.getElementById('qrScanModal'); if (el) el.style.display = 'flex';
   var el2 = document.getElementById('qrScanInput'); if (el2) el2.value = '';
   var el3 = document.getElementById('qrScanResult'); if (el3) el3.innerHTML = '';
-  setTimeout(function() {     var el = document.getElementById('qrScanInput'); if (el) el.focus(); }, 200);
+  setTimeout(function() { var el = document.getElementById('qrScanInput'); if (el) el.focus(); }, 200);
 }
 
 function closeQRScanDialog() {
   var el = document.getElementById('qrScanModal'); if (el) el.style.display = 'none';
 }
 
+function openQRScannerFromDialog() {
+  closeQRScanDialog();
+  openQRScanner();
+}
+
 function processQRScan() {
   var input = document.getElementById('qrScanInput').value.trim();
   if (!input) { showToast('Please enter or scan a QR code / barcode', 'warning'); return; }
   var resultDiv = document.getElementById('qrScanResult');
-      if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:10px">Searching...</div>';
-  google.script.run
-    .withSuccessHandler(function(result) { renderQRScanResult(result, input, resultDiv); })
-    .withFailureHandler(function() { if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;color:var(--danger)">Error searching record</div>'; })
-    .scanQRCode(input);
+  if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:10px">Searching...</div>';
+  google.script.run.withSuccessHandler(function(result) { renderQRScanResult(result, input, resultDiv); }).withFailureHandler(function() { if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;color:var(--danger)">Error searching record</div>'; }).scanQRCode(input);
 }
 
 function renderQRScanResult(result, input, resultDiv) {
-  if (result) {
-    buildQRScanResultUI(result, resultDiv);
-    return;
-  }
-  google.script.run
-    .withSuccessHandler(function(barcodeResult) {
-      if (barcodeResult) {
-        buildQRScanResultUI(barcodeResult, resultDiv);
-      } else {
-        if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;padding:16px;color:var(--danger)"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><br>No record found for this QR / barcode</div>';
-      }
-    })
-    .withFailureHandler(function() { if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;color:var(--danger)">Error searching record</div>'; })
-    .scanBarcode(input);
+  if (result) { buildQRScanResultUI(result, resultDiv); return; }
+  google.script.run.withSuccessHandler(function(barcodeResult) {
+    if (barcodeResult) { buildQRScanResultUI(barcodeResult, resultDiv); }
+    else { if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;padding:16px;color:var(--danger)"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><br>No record found for this QR / barcode</div>'; }
+  }).withFailureHandler(function() { if (resultDiv) resultDiv.innerHTML = '<div style="text-align:center;color:var(--danger)">Error searching record</div>'; }).scanBarcode(input);
 }
 
 function buildQRScanResultUI(result, resultDiv) {
@@ -391,7 +337,7 @@ function buildQRScanResultUI(result, resultDiv) {
   if (mod === 'Machine') link = "navigateTo('machines')";
   else if (mod === 'Asset') link = "navigateTo('assets')";
   else if (mod === 'Spare Part') link = "navigateTo('spareparts')";
-  else if (mod === 'PM Equipment') link = "navigateTo('pm')";
+  else if (mod === 'Job Card') link = "navigateTo('jobcards')";
   resultDiv.innerHTML = '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px">' +
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
     '<div style="width:36px;height:36px;border-radius:50%;background:var(--success-bg);color:var(--success);display:flex;align-items:center;justify-content:center;font-size:18px">&#10003;</div>' +
@@ -419,8 +365,8 @@ function escapeHtml(str) {
   .qr-summary .stat-card .stat-info h3 { font-size:20px; }
   .qr-summary .stat-card .stat-info p { font-size:11px; }
   .qr-controls { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px; }
-  .qr-tabs { display:flex; gap:4px; }
-  .qr-tab { padding:7px 16px; font-size:12px; font-weight:500; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-secondary); cursor:pointer; transition:var(--transition); font-family:inherit; }
+  .qr-tabs { display:flex; gap:4px; flex-wrap:wrap; }
+  .qr-tab { padding:7px 14px; font-size:12px; font-weight:500; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-secondary); cursor:pointer; transition:var(--transition); font-family:inherit; }
   .qr-tab:hover { background:var(--bg-card-hover); color:var(--text); }
   .qr-tab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
   .qr-actions { display:flex; gap:6px; flex-wrap:wrap; }
@@ -429,7 +375,7 @@ function escapeHtml(str) {
   .qr-search-bar input::placeholder { color:var(--text-muted); }
   .qr-search-bar select { padding:7px 10px; font-size:12px; background:var(--bg-input); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:inherit; }
   .qr-table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-card); }
-  .qr-table-wrap table { width:100%; border-collapse:collapse; font-size:12px; min-width:900px; }
+  .qr-table-wrap table { width:100%; border-collapse:collapse; font-size:12px; min-width:800px; }
   .qr-table-wrap th { padding:9px 10px; text-align:left; font-weight:600; color:var(--text-secondary); font-size:11px; text-transform:uppercase; letter-spacing:0.5px; background:var(--bg-sidebar); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:2; white-space:nowrap; }
   .qr-table-wrap td { padding:8px 10px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
   .qr-table-wrap tr:hover td { background:var(--bg-card-hover); }
@@ -460,3 +406,455 @@ function escapeHtml(str) {
 </style>
 </div>
 </div>
+
+<div id="qrmachinesPage" class="page">
+<div class="page-content">
+  <div class="page-header"><h2>Machine QR Management</h2></div>
+  <div class="qr-controls">
+    <div class="qr-tabs">
+      <button class="qr-tab" onclick="navigateTo('qr')">Overview</button>
+      <button class="qr-tab active">Machines</button>
+      <button class="qr-tab" onclick="navigateTo('qrassets')">Assets</button>
+      <button class="qr-tab" onclick="navigateTo('qrspareparts')">Spare Parts</button>
+      <button class="qr-tab" onclick="navigateTo('qrjobcards')">Job Cards</button>
+      <button class="qr-tab" onclick="navigateTo('qrprint')">Print Labels</button>
+      <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
+    </div>
+    <div class="qr-actions">
+      <button class="filter-btn btn-primary" onclick="bulkGenForModule('Machine','QR')">Bulk Generate QR</button>
+      <button class="filter-btn btn-success" onclick="bulkGenForModule('Machine','Barcode')">Bulk Barcode</button>
+    </div>
+  </div>
+  <div class="qr-search-bar">
+    <input type="text" id="qrMachineSearch" placeholder="Search machines..." onkeyup="filterModTable()">
+    <select id="qrMachineDeptFilter" onchange="filterModTable()"><option value="">All Departments</option></select>
+    <select id="qrMachineSectionFilter" onchange="filterModTable()"><option value="">All Sections</option></select>
+    <select id="qrMachineStatusFilter" onchange="filterModTable()"><option value="">All Status</option></select>
+  </div>
+  <div class="qr-table-wrap"><table><thead><tr><th>#</th><th>Machine Code</th><th>Machine Name</th><th>Department</th><th>Section</th><th>Status</th><th>QR Code</th><th>Barcode</th><th>Actions</th></tr></thead><tbody id="qrMachineTableBody"><tr><td colspan="9" class="qr-empty">Loading...</td></tr></tbody></table></div>
+  <div class="page-footer-actions"><div class="page-info" id="qrMachinePageInfo">Showing 0 records</div></div>
+</div>
+</div>
+
+<div id="qrassetsPage" class="page">
+<div class="page-content">
+  <div class="page-header"><h2>Asset QR Management</h2></div>
+  <div class="qr-controls">
+    <div class="qr-tabs">
+      <button class="qr-tab" onclick="navigateTo('qr')">Overview</button>
+      <button class="qr-tab" onclick="navigateTo('qrmachines')">Machines</button>
+      <button class="qr-tab active">Assets</button>
+      <button class="qr-tab" onclick="navigateTo('qrspareparts')">Spare Parts</button>
+      <button class="qr-tab" onclick="navigateTo('qrjobcards')">Job Cards</button>
+      <button class="qr-tab" onclick="navigateTo('qrprint')">Print Labels</button>
+      <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
+    </div>
+    <div class="qr-actions">
+      <button class="filter-btn btn-primary" onclick="bulkGenForModule('Asset','QR')">Bulk Generate QR</button>
+      <button class="filter-btn btn-success" onclick="bulkGenForModule('Asset','Barcode')">Bulk Barcode</button>
+    </div>
+  </div>
+  <div class="qr-search-bar">
+    <input type="text" id="qrAssetSearch" placeholder="Search assets..." onkeyup="filterModTable()">
+    <select id="qrAssetDeptFilter" onchange="filterModTable()"><option value="">All Departments</option></select>
+    <select id="qrAssetSectionFilter" onchange="filterModTable()"><option value="">All Sections</option></select>
+    <select id="qrAssetStatusFilter" onchange="filterModTable()"><option value="">All Status</option></select>
+  </div>
+  <div class="qr-table-wrap"><table><thead><tr><th>#</th><th>Asset Code</th><th>Asset Name</th><th>Department</th><th>Section</th><th>Status</th><th>QR Code</th><th>Barcode</th><th>Actions</th></tr></thead><tbody id="qrAssetTableBody"><tr><td colspan="9" class="qr-empty">Loading...</td></tr></tbody></table></div>
+  <div class="page-footer-actions"><div class="page-info" id="qrAssetPageInfo">Showing 0 records</div></div>
+</div>
+</div>
+
+<div id="qrsparepartsPage" class="page">
+<div class="page-content">
+  <div class="page-header"><h2>Spare Parts QR Management</h2></div>
+  <div class="qr-controls">
+    <div class="qr-tabs">
+      <button class="qr-tab" onclick="navigateTo('qr')">Overview</button>
+      <button class="qr-tab" onclick="navigateTo('qrmachines')">Machines</button>
+      <button class="qr-tab" onclick="navigateTo('qrassets')">Assets</button>
+      <button class="qr-tab active">Spare Parts</button>
+      <button class="qr-tab" onclick="navigateTo('qrjobcards')">Job Cards</button>
+      <button class="qr-tab" onclick="navigateTo('qrprint')">Print Labels</button>
+      <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
+    </div>
+    <div class="qr-actions">
+      <button class="filter-btn btn-primary" onclick="bulkGenForModule('Spare Part','QR')">Bulk Generate QR</button>
+      <button class="filter-btn btn-success" onclick="bulkGenForModule('Spare Part','Barcode')">Bulk Barcode</button>
+    </div>
+  </div>
+  <div class="qr-search-bar">
+    <input type="text" id="qrSpareSearch" placeholder="Search spare parts..." onkeyup="filterModTable()">
+    <select id="qrSpareDeptFilter" onchange="filterModTable()"><option value="">All Categories</option></select>
+    <select id="qrSpareStatusFilter" onchange="filterModTable()"><option value="">All Status</option></select>
+  </div>
+  <div class="qr-table-wrap"><table><thead><tr><th>#</th><th>Part Code</th><th>Part Name</th><th>Category</th><th>Stock</th><th>Location</th><th>QR Code</th><th>Barcode</th><th>Actions</th></tr></thead><tbody id="qrSpareTableBody"><tr><td colspan="9" class="qr-empty">Loading...</td></tr></tbody></table></div>
+  <div class="page-footer-actions"><div class="page-info" id="qrSparePageInfo">Showing 0 records</div></div>
+</div>
+</div>
+
+<div id="qrjobcardsPage" class="page">
+<div class="page-content">
+  <div class="page-header"><h2>Job Card QR Management</h2></div>
+  <div class="qr-controls">
+    <div class="qr-tabs">
+      <button class="qr-tab" onclick="navigateTo('qr')">Overview</button>
+      <button class="qr-tab" onclick="navigateTo('qrmachines')">Machines</button>
+      <button class="qr-tab" onclick="navigateTo('qrassets')">Assets</button>
+      <button class="qr-tab" onclick="navigateTo('qrspareparts')">Spare Parts</button>
+      <button class="qr-tab active">Job Cards</button>
+      <button class="qr-tab" onclick="navigateTo('qrprint')">Print Labels</button>
+      <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
+    </div>
+    <div class="qr-actions">
+      <button class="filter-btn btn-primary" onclick="bulkGenForModule('Job Card','QR')">Bulk Generate QR</button>
+      <button class="filter-btn btn-success" onclick="bulkGenForModule('Job Card','Barcode')">Bulk Barcode</button>
+    </div>
+  </div>
+  <div class="qr-search-bar">
+    <input type="text" id="qrJCSearch" placeholder="Search job cards..." onkeyup="filterModTable()">
+    <select id="qrJCStatusFilter" onchange="filterModTable()"><option value="">All Status</option></select>
+    <select id="qrJCPriorityFilter" onchange="filterModTable()"><option value="">All Priority</option></select>
+  </div>
+  <div class="qr-table-wrap"><table><thead><tr><th>#</th><th>Job Card No</th><th>Machine</th><th>Status</th><th>Open Date</th><th>Priority</th><th>QR Code</th><th>Barcode</th><th>Actions</th></tr></thead><tbody id="qrJCTableBody"><tr><td colspan="9" class="qr-empty">Loading...</td></tr></tbody></table></div>
+  <div class="page-footer-actions"><div class="page-info" id="qrJCPageInfo">Showing 0 records</div></div>
+</div>
+</div>
+
+<div id="qrprintPage" class="page">
+<div class="page-content">
+  <div class="page-header"><h2>Print QR Labels</h2></div>
+  <div class="qr-controls">
+    <div class="qr-tabs">
+      <button class="qr-tab" onclick="navigateTo('qr')">Overview</button>
+      <button class="qr-tab" onclick="navigateTo('qrmachines')">Machines</button>
+      <button class="qr-tab" onclick="navigateTo('qrassets')">Assets</button>
+      <button class="qr-tab" onclick="navigateTo('qrspareparts')">Spare Parts</button>
+      <button class="qr-tab" onclick="navigateTo('qrjobcards')">Job Cards</button>
+      <button class="qr-tab active">Print Labels</button>
+      <button class="qr-tab" onclick="navigateTo('qrhistory')">History</button>
+    </div>
+  </div>
+  <div class="qr-search-bar">
+    <select id="qrPrintModule" onchange="loadPrintRecords()" style="min-width:150px">
+      <option value="">All Modules</option>
+      <option value="Machine">Machine</option>
+      <option value="Asset">Asset</option>
+      <option value="Spare Part">Spare Part</option>
+      <option value="Job Card">Job Card</option>
+    </select>
+    <input type="text" id="qrPrintSearch" placeholder="Search..." onkeyup="filterPrintTable()">
+  </div>
+  <div class="qr-table-wrap"><table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Module</th><th>QR</th><th>Barcode</th><th>Action</th></tr></thead><tbody id="qrPrintTableBody"><tr><td colspan="7" class="qr-empty">Loading...</td></tr></tbody></table></div>
+  <div class="page-footer-actions"><div class="page-info" id="qrPrintPageInfo">Showing 0 records</div></div>
+</div>
+</div>
+
+<div id="qrhistoryPage" class="page">
+<div class="page-content">
+  <div class="page-header"><h2>QR Scan History</h2></div>
+  <div class="qr-controls">
+    <div class="qr-tabs">
+      <button class="qr-tab" onclick="navigateTo('qr')">Overview</button>
+      <button class="qr-tab" onclick="navigateTo('qrmachines')">Machines</button>
+      <button class="qr-tab" onclick="navigateTo('qrassets')">Assets</button>
+      <button class="qr-tab" onclick="navigateTo('qrspareparts')">Spare Parts</button>
+      <button class="qr-tab" onclick="navigateTo('qrjobcards')">Job Cards</button>
+      <button class="qr-tab" onclick="navigateTo('qrprint')">Print Labels</button>
+      <button class="qr-tab active">History</button>
+    </div>
+  </div>
+  <div class="qr-search-bar">
+    <select id="qrHistModule" onchange="loadQRHistoryData()" style="min-width:150px">
+      <option value="">All Modules</option>
+      <option value="Machine">Machine</option>
+      <option value="Asset">Asset</option>
+      <option value="Spare Part">Spare Part</option>
+      <option value="Job Card">Job Card</option>
+    </select>
+    <input type="text" id="qrHistSearch" placeholder="Search history..." onkeyup="loadQRHistoryData()">
+  </div>
+  <div class="qr-summary" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+    <div class="stat-card stat-primary"><div class="stat-inner"><div class="stat-info"><h3 id="qrHistTotal">0</h3><p>Total Scans</p></div></div></div>
+    <div class="stat-card stat-success"><div class="stat-inner"><div class="stat-info"><h3 id="qrHistToday">0</h3><p>Today</p></div></div></div>
+    <div class="stat-card stat-warning"><div class="stat-inner"><div class="stat-info"><h3 id="qrHistUsers">0</h3><p>Unique Users</p></div></div></div>
+  </div>
+  <div class="qr-table-wrap"><table><thead><tr><th>#</th><th>Date/Time</th><th>User</th><th>Module</th><th>Record</th><th>Action</th><th>Device</th></tr></thead><tbody id="qrHistTableBody"><tr><td colspan="7" class="qr-empty">Loading...</td></tr></tbody></table></div>
+  <div class="page-footer-actions">
+    <div class="page-info" id="qrHistPageInfo">Showing 0 records</div>
+    <div style="display:flex;gap:4px">
+      <button class="btn-xs btn-secondary" id="qrHistPrevBtn" onclick="qrHistPageNav(-1)" disabled>Previous</button>
+      <button class="btn-xs btn-secondary" id="qrHistNextBtn" onclick="qrHistPageNav(1)">Next</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+var modDataCache = [];
+var modFilteredCache = [];
+var currentModPage = 'Machine';
+var printDataCache = [];
+var qrHistPage = 1;
+
+function loadQRMachines() { currentModPage = 'Machine'; loadModPageData('Machine'); }
+function loadQRAssets() { currentModPage = 'Asset'; loadModPageData('Asset'); }
+function loadQRSpareParts() { currentModPage = 'Spare Part'; loadModPageData('Spare Part'); }
+function loadQRJobCards() { currentModPage = 'Job Card'; loadModPageData('Job Card'); }
+
+function getModPageIds(mod) {
+  var map = { 'Machine': { search: 'qrMachineSearch', table: 'qrMachineTableBody', info: 'qrMachinePageInfo', deptFilter: 'qrMachineDeptFilter', sectionFilter: 'qrMachineSectionFilter', statusFilter: 'qrMachineStatusFilter' },
+              'Asset': { search: 'qrAssetSearch', table: 'qrAssetTableBody', info: 'qrAssetPageInfo', deptFilter: 'qrAssetDeptFilter', sectionFilter: 'qrAssetSectionFilter', statusFilter: 'qrAssetStatusFilter' },
+              'Spare Part': { search: 'qrSpareSearch', table: 'qrSpareTableBody', info: 'qrSparePageInfo', deptFilter: 'qrSpareDeptFilter', statusFilter: 'qrSpareStatusFilter' },
+              'Job Card': { search: 'qrJCSearch', table: 'qrJCTableBody', info: 'qrJCPageInfo', statusFilter: 'qrJCStatusFilter', priorityFilter: 'qrJCPriorityFilter' } };
+  return map[mod] || map['Machine'];
+}
+
+function loadModPageData(mod) {
+  currentModPage = mod;
+  var ids = getModPageIds(mod);
+  var el = document.getElementById(ids.table); if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">Loading...</td></tr>';
+  google.script.run.withSuccessHandler(function(records) {
+    modDataCache = records || [];
+    populateModFilters(mod, modDataCache);
+    filterModTable();
+  }).withFailureHandler(function() {
+    var el = document.getElementById(ids.table); if (el) el.innerHTML = '<tr><td colspan="9" class="qr-empty">Error loading data</td></tr>';
+  }).getQRModuleRecords(mod);
+}
+
+function populateModFilters(mod, records) {
+  var ids = getModPageIds(mod);
+  if (!records || !records.length) return;
+  if (mod === 'Machine' || mod === 'Asset') {
+    var depts = {}; var secs = {}; var stats = {};
+    records.forEach(function(r) { if (r.department) depts[r.department] = true; if (r.section) secs[r.section] = true; if (r.status) stats[r.status] = true; });
+    var deptKeys = Object.keys(depts).sort();
+    var secKeys = Object.keys(secs).sort();
+    var statKeys = Object.keys(stats).sort();
+    var deptSel = document.getElementById(ids.deptFilter);
+    if (deptSel && deptSel.options.length <= 1) {
+      deptSel.innerHTML = '<option value="">All Departments</option>';
+      deptKeys.forEach(function(k) { deptSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+    }
+    var secSel = document.getElementById(ids.sectionFilter);
+    if (secSel && secSel.options.length <= 1) {
+      secSel.innerHTML = '<option value="">All Sections</option>';
+      secKeys.forEach(function(k) { secSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+    }
+    var statSel = document.getElementById(ids.statusFilter);
+    if (statSel && statSel.options.length <= 1) {
+      statSel.innerHTML = '<option value="">All Status</option>';
+      statKeys.forEach(function(k) { statSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+    }
+  } else if (mod === 'Spare Part') {
+    var cats = {}; var stat2s = {};
+    records.forEach(function(r) { if (r.category) cats[r.category] = true; if (r.status) stat2s[r.status] = true; });
+    var catKeys = Object.keys(cats).sort();
+    var statKeys2 = Object.keys(stat2s).sort();
+    var catSel = document.getElementById(ids.deptFilter);
+    if (catSel && catSel.options.length <= 1) {
+      catSel.innerHTML = '<option value="">All Categories</option>';
+      catKeys.forEach(function(k) { catSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+    }
+    var statSel2 = document.getElementById(ids.statusFilter);
+    if (statSel2 && statSel2.options.length <= 1) {
+      statSel2.innerHTML = '<option value="">All Status</option>';
+      statKeys2.forEach(function(k) { statSel2.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+    }
+  } else if (mod === 'Job Card') {
+    var jcstats = {}; var priss = {};
+    records.forEach(function(r) { var s = r.status || r.currentStatus || ''; if (s) jcstats[s] = true; if (r.priority) priss[r.priority] = true; });
+    var jcStatKeys = Object.keys(jcstats).sort();
+    var priKeys = Object.keys(priss).sort();
+    var jcStatSel = document.getElementById(ids.statusFilter);
+    if (jcStatSel && jcStatSel.options.length <= 1) {
+      jcStatSel.innerHTML = '<option value="">All Status</option>';
+      jcStatKeys.forEach(function(k) { jcStatSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+    }
+    var priSel = document.getElementById(ids.priorityFilter);
+    if (priSel && priSel.options.length <= 1) {
+      priSel.innerHTML = '<option value="">All Priority</option>';
+      priKeys.forEach(function(k) { priSel.innerHTML += '<option value="' + escapeHtml(k) + '">' + escapeHtml(k) + '</option>'; });
+    }
+  }
+}
+
+function filterModTable() {
+  var ids = getModPageIds(currentModPage);
+  var searchEl = document.getElementById(ids.search);
+  var search = searchEl ? searchEl.value.toLowerCase() : '';
+  var deptFilter = ids.deptFilter ? document.getElementById(ids.deptFilter) : null;
+  var secFilter = ids.sectionFilter ? document.getElementById(ids.sectionFilter) : null;
+  var statFilter = ids.statusFilter ? document.getElementById(ids.statusFilter) : null;
+  var priFilter = ids.priorityFilter ? document.getElementById(ids.priorityFilter) : null;
+  var selDept = deptFilter ? deptFilter.value : '';
+  var selSec = secFilter ? secFilter.value : '';
+  var selStat = statFilter ? statFilter.value : '';
+  var selPri = priFilter ? priFilter.value : '';
+  modFilteredCache = modDataCache.filter(function(r) {
+    if (search && (r.name || '').toLowerCase().indexOf(search) === -1 && (r.id || '').toLowerCase().indexOf(search) === -1 && (r.code || '').toLowerCase().indexOf(search) === -1) return false;
+    if (selDept && r.department !== selDept) return false;
+    if (selSec && r.section !== selSec) return false;
+    if (selStat && (r.status || r.currentStatus) !== selStat) return false;
+    if (selPri && r.priority !== selPri) return false;
+    return true;
+  });
+  renderModTable();
+}
+
+function renderModTable() {
+  var ids = getModPageIds(currentModPage);
+  var tbody = document.getElementById(ids.table);
+  if (!modFilteredCache.length) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="9" class="qr-empty">No records found</td></tr>';
+    var pi = document.getElementById(ids.info); if (pi) pi.textContent = 'Showing 0 records';
+    return;
+  }
+  var html = '';
+  var mod = currentModPage;
+  for (var i = 0; i < modFilteredCache.length; i++) {
+    var r = modFilteredCache[i];
+    html += '<tr>';
+    html += '<td>' + (i + 1) + '</td>';
+    if (mod === 'Machine') {
+      html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
+      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+      html += '<td>' + escapeHtml(r.department || '-') + '</td>';
+      html += '<td>' + escapeHtml(r.section || '-') + '</td>';
+      html += '<td>' + statusBadge(r.status || '') + '</td>';
+    } else if (mod === 'Asset') {
+      html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
+      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+      html += '<td>' + escapeHtml(r.department || '-') + '</td>';
+      html += '<td>' + escapeHtml(r.section || '-') + '</td>';
+      html += '<td>' + statusBadge(r.status || '') + '</td>';
+    } else if (mod === 'Spare Part') {
+      html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
+      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+      html += '<td>' + escapeHtml(r.category || '-') + '</td>';
+      html += '<td>' + escapeHtml(r.currentStock || '0') + ' / ' + escapeHtml(r.minimumStock || '0') + '</td>';
+      html += '<td>' + escapeHtml(r.location || r.binNumber || '-') + '</td>';
+    } else if (mod === 'Job Card') {
+      html += '<td><span class="mono">' + escapeHtml(r.id) + '</span></td>';
+      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+      html += '<td>' + statusBadge(r.status || r.currentStatus || '') + '</td>';
+      html += '<td class="muted">' + escapeHtml(r.openDate || '-') + '</td>';
+      html += '<td><span class="priority-badge badge badge-' + (r.priority === 'Critical' || r.priority === 'High' ? 'danger' : r.priority === 'Medium' ? 'warning' : 'success') + '">' + escapeHtml(r.priority || '-') + '</span></td>';
+    } else {
+      html += '<td><span class="mono">' + escapeHtml(r.code || r.id) + '</span></td>';
+      html += '<td><strong>' + escapeHtml(r.name) + '</strong></td>';
+      html += '<td>' + escapeHtml(r.department || '-') + '</td>';
+      html += '<td>' + escapeHtml(r.status || '-') + '</td>';
+    }
+    html += '<td class="qr-cell">' + (r.qrCode ? '<span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span>' : '<button class="btn-xs btn-primary" onclick="generateSingleQR(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
+    html += '<td class="qr-cell">' + (r.barcode ? '<span class="mono-sm">' + escapeHtml(r.barcode) + '</span>' : '<button class="btn-xs btn-success" onclick="generateSingleBarcode(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')">Generate</button>') + '</td>';
+    html += '<td class="qr-actions-cell">';
+    if (r.qrCode) html += '<button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(currentModPage) + '\',\'' + escapeHtml(r.id) + '\')" title="Print Label">&#128424;</button> ';
+    if (r.qrCode) html += '<button class="btn-xs btn-secondary" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')" title="View QR">&#128065;</button>';
+    html += '</td></tr>';
+  }
+  if (tbody) tbody.innerHTML = html;
+  var pi = document.getElementById(ids.info); if (pi) pi.textContent = 'Showing ' + modFilteredCache.length + ' records';
+}
+
+function statusBadge(s) {
+  if (!s) return '<span class="badge badge-secondary">-</span>';
+  var cls = (s.toLowerCase() === 'active' || s.toLowerCase() === 'closed' || s.toLowerCase() === 'completed') ? 'success' :
+            (s.toLowerCase() === 'inactive' || s.toLowerCase() === 'cancelled') ? 'danger' :
+            (s.toLowerCase() === 'open' || s.toLowerCase() === 'waiting') ? 'warning' : 'primary';
+  return '<span class="badge badge-' + cls + '">' + escapeHtml(s) + '</span>';
+}
+
+function bulkGenForModule(mod, type) {
+  var action = type === 'QR' ? 'QR codes' : 'barcodes';
+  if (!confirm('Generate ' + action + ' for all ' + mod + ' records without ' + action + '?')) return;
+  var fn = type === 'QR' ? 'bulkGenerateQRCode' : 'bulkGenerateBarcode';
+  google.script.run.withSuccessHandler(function(results) {
+    loadModPageData(currentModPage);
+    showToast('Generated ' + (results || []).length + ' ' + action);
+  }).withFailureHandler(function(err) { showToast('Error: ' + err.message, 'error'); })[fn](mod);
+}
+
+function loadQRPrint() {
+  printDataCache = [];
+  var modules = ['Machine', 'Asset', 'Spare Part', 'Job Card'];
+  var loaded = 0;
+  modules.forEach(function(mod) {
+    google.script.run.withSuccessHandler(function(records) {
+      (records || []).forEach(function(r) { if (r.qrCode) { r.module = mod; printDataCache.push(r); } });
+      loaded++;
+      if (loaded === modules.length) filterPrintTable();
+    }).withFailureHandler(function() { loaded++; if (loaded === modules.length) filterPrintTable(); }).getQRModuleRecords(mod);
+  });
+}
+
+function loadPrintRecords() { filterPrintTable(); }
+
+function filterPrintTable() {
+  var search = (document.getElementById('qrPrintSearch').value || '').toLowerCase();
+  var modFilter = document.getElementById('qrPrintModule').value;
+  var filtered = printDataCache.filter(function(r) {
+    if (modFilter && r.module !== modFilter) return false;
+    if (search && (r.name || '').toLowerCase().indexOf(search) === -1 && (r.id || '').toLowerCase().indexOf(search) === -1) return false;
+    return true;
+  });
+  var tbody = document.getElementById('qrPrintTableBody');
+  if (!filtered.length) {
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="qr-empty">No printable records found</td></tr>';
+    return;
+  }
+  var html = '';
+  var modColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
+  for (var i = 0; i < filtered.length; i++) {
+    var r = filtered[i];
+    html += '<tr><td>' + (i + 1) + '</td><td><span class="mono">' + escapeHtml(r.id) + '</span></td><td><strong>' + escapeHtml(r.name) + '</strong></td>';
+    html += '<td><span style="background:' + (modColors[r.module] || '#999') + '22;color:' + (modColors[r.module] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.module) + '</span></td>';
+    html += '<td class="qr-cell"><span class="qr-check" onclick="previewQRCode(\'' + escapeHtml(r.id) + '\',\'' + escapeHtml(r.qrCode) + '\')">&#10003;</span></td>';
+    html += '<td class="mono-sm">' + escapeHtml(r.barcode || '') + '</td>';
+    html += '<td><button class="btn-xs btn-info" onclick="showQRLabelDialog(\'' + escapeHtml(r.module) + '\',\'' + escapeHtml(r.id) + '\')">Print Label</button></td></tr>';
+  }
+  if (tbody) tbody.innerHTML = html;
+  var pi = document.getElementById('qrPrintPageInfo'); if (pi) pi.textContent = 'Showing ' + filtered.length + ' records';
+}
+
+function loadQRHistory() {
+  qrHistPage = 1;
+  loadQRHistoryData();
+}
+
+function loadQRHistoryData() {
+  var mod = document.getElementById('qrHistModule').value;
+  var search = document.getElementById('qrHistSearch').value;
+  google.script.run.withSuccessHandler(function(result) {
+    if (!result) return;
+    var tbody = document.getElementById('qrHistTableBody');
+    var records = result.records || [];
+    if (!records.length) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="qr-empty">No scan history found</td></tr>';
+      return;
+    }
+    var html = '';
+    var modColors = { 'Machine': '#6366f1', 'Asset': '#06b6d4', 'Spare Part': '#22c55e', 'Job Card': '#f59e0b' };
+    for (var i = 0; i < records.length; i++) {
+      var r = records[i];
+      html += '<tr><td>' + ((result.page - 1) * result.pageSize + i + 1) + '</td>';
+      html += '<td class="muted">' + escapeHtml(r.ScanDateTime || '') + '</td>';
+      html += '<td>' + escapeHtml(r.UserName || r.UserEmail || '') + '</td>';
+      html += '<td><span style="background:' + (modColors[r.QRModule] || '#999') + '22;color:' + (modColors[r.QRModule] || '#999') + ';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">' + escapeHtml(r.QRModule || '') + '</span></td>';
+      html += '<td><strong>' + escapeHtml(r.RecordID || '') + '</strong> <span class="muted">' + escapeHtml(r.RecordName || '') + '</span></td>';
+      html += '<td>' + escapeHtml(r.Action || '') + '</td>';
+      html += '<td class="muted">' + escapeHtml(r.DeviceType || '') + '</td></tr>';
+    }
+    if (tbody) tbody.innerHTML = html;
+    var pi = document.getElementById('qrHistPageInfo'); if (pi) pi.textContent = 'Page ' + result.page + ' of ' + result.totalPages + ' (' + result.total + ' total)';
+    document.getElementById('qrHistPrevBtn').disabled = result.page <= 1;
+    document.getElementById('qrHistNextBtn').disabled = result.page >= result.totalPages;
+  }).withFailureHandler(function(){}).getQRScanHistory({ module: mod, search: search, page: qrHistPage, pageSize: 25 });
+}
+
+function qrHistPageNav(dir) {
+  qrHistPage = Math.max(1, qrHistPage + dir);
+  loadQRHistoryData();
+}
+</script>
