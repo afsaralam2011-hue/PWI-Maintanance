@@ -1,11 +1,12 @@
 /* ============================================================
    API.gs — REST API Router for Cloudflare Pages Frontend
-   Standard-021: Enterprise Architecture Migration
    
    doPost() handles all API requests from Cloudflare Pages.
    doOptions() handles CORS preflight requests.
    Existing doGet() and HTML app remain untouched.
    ============================================================ */
+
+/* ---- CORS ---- */
 
 function getCorsOrigin(e) {
   try {
@@ -15,7 +16,7 @@ function getCorsOrigin(e) {
   return '*';
 }
 
-/* ---- CORS & Response Helpers ---- */
+/* ---- Response Helpers ---- */
 
 function apiSetCors(resp, origin) {
   resp = resp.setHeader('Access-Control-Allow-Origin', origin || '*')
@@ -56,7 +57,17 @@ function doOptions(e) {
 
 function doPost(e) {
   try {
-    var body = JSON.parse(e.postData.contents);
+    if (!e || !e.postData || !e.postData.contents) {
+      return apiError('Invalid request: no POST data received', 400, e);
+    }
+
+    var body;
+    try {
+      body = JSON.parse(e.postData.contents);
+    } catch(parseErr) {
+      return apiError('Invalid JSON in request body', 400, e);
+    }
+
     var action = body.action || '';
     var token = body.token || '';
     var data = body.data || {};
@@ -67,11 +78,13 @@ function doPost(e) {
     if (!route) return apiError('Unknown action: ' + action, 404, e);
 
     if (route.auth) {
+      if (!token) return apiError('Unauthorized. Please login again.', 401, e);
       var user = validateApiToken(token);
       if (!user) return apiError('Unauthorized. Please login again.', 401, e);
       data._userEmail = user.email;
       data._userRole = user.role;
       data._userName = user.name;
+      data._token = token;
     }
 
     var result = route.handler(data);
@@ -294,7 +307,7 @@ var API_ROUTES = {
 
 /* ============================================================
    API Handler Wrappers
-   Functions that need email parameter injection or data transform
+   Functions that need parameter injection or data transform
    ============================================================ */
 
 function apiGetUsers(d) {
