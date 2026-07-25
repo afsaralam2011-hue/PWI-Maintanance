@@ -200,6 +200,14 @@ function setText(id, text) {
   if (el) el.textContent = text;
 }
 
+function formatCurrencyPKR(value) {
+  var v = Math.round(Math.abs(parseFloat(value) || 0));
+  if (v >= 1000000000) return 'Rs. ' + (v / 1000000000).toFixed(2) + 'B';
+  if (v >= 1000000) return 'Rs. ' + (v / 1000000).toFixed(2) + 'M';
+  if (v >= 1000) return 'Rs. ' + (v / 1000).toFixed(0) + 'K';
+  return 'Rs. ' + v;
+}
+
 function setHtml(id, html) {
   var el = document.getElementById(id);
   if (el) el.innerHTML = html; else console.warn('Element not found:', id);
@@ -1003,7 +1011,7 @@ function showQRDetail(result) {
     rows += buildDetailRow('Model', result.model);
     rows += buildDetailRow('Serial No', result.serialNo);
     rows += buildDetailRow('Criticality', result.criticality);
-    rows += buildDetailRow('Cost', result.cost ? '$' + result.cost : '');
+    rows += buildDetailRow('Cost', result.cost ? 'Rs. ' + result.cost : '');
     rows += buildDetailRow('Purchase Date', result.purchaseDate);
     rows += buildDetailRow('Install Date', result.installDate);
     rows += buildDetailRow('Warranty Expiry', result.warrantyExpiry);
@@ -1095,7 +1103,7 @@ function showQRDetail(result) {
     rows += buildDetailRow('Minimum Stock', result.minimumStock);
     rows += buildDetailRow('Maximum Stock', result.maximumStock);
     rows += buildDetailRow('Reorder Level', result.reorderLevel);
-    rows += buildDetailRow('Unit Cost', result.unitCost ? '$' + result.unitCost : '');
+    rows += buildDetailRow('Unit Cost', result.unitCost ? 'Rs. ' + result.unitCost : '');
     rows += buildDetailRow('Supplier', result.supplier);
     rows += buildDetailRow('Store Location', result.location);
     rows += buildDetailRow('Bin Number', result.binNumber);
@@ -1831,6 +1839,8 @@ var unreadCount = 0;
 var __notifRefreshTimer = null;
 var __notifSearchTimer = null;
 var __notifListFilter = 'all';
+var __notifPage = 1;
+var __notifPageSize = 5;
 var notifTypeColors = {
   'Information': { color: '#06b6d4', bg: 'rgba(6,182,212,0.11)', icon: 'info' },
   'Success': { color: '#22c55e', bg: 'rgba(34,197,94,0.11)', icon: 'success' },
@@ -1865,6 +1875,7 @@ var defaultNotifIcon = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColo
 var priorityBadgeMap = { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' };
 
 function loadNotifications() {
+  __notifPage = 1;
   var email = (currentUser && currentUser.email) || '';
   google.script.run
     .withSuccessHandler(function(data) {
@@ -1894,6 +1905,7 @@ function updateNotificationBadge() {
 
 function setNotifListFilter(filter) {
   __notifListFilter = filter;
+  __notifPage = 1;
   document.querySelectorAll('.notif-filter-tab').forEach(function(t) {
     t.classList.toggle('active', t.dataset.filter === filter);
   });
@@ -1901,11 +1913,13 @@ function setNotifListFilter(filter) {
 }
 
 function onNotifSearchInput() {
+  __notifPage = 1;
   if (__notifSearchTimer) clearTimeout(__notifSearchTimer);
   __notifSearchTimer = setTimeout(renderNotifications, 250);
 }
 
 function applyNotifListFilters() {
+  __notifPage = 1;
   renderNotifications();
 }
 
@@ -1933,6 +1947,7 @@ function getFilteredNotifications() {
 
 function renderNotifications() {
   var list = document.getElementById('notificationList');
+  var footer = document.getElementById('notifPaginationFooter');
   if (!list) return;
   var filtered = getFilteredNotifications();
   var countEl = document.getElementById('notifPanelCount');
@@ -1943,18 +1958,21 @@ function renderNotifications() {
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>' +
         '<p>No notifications</p>' +
       '</div>';
+    if (footer) footer.innerHTML = '';
     return;
   }
-  var maxPanelItems = 100;
-  var displayNots = filtered.slice(0, maxPanelItems);
+  var totalPages = Math.ceil(filtered.length / __notifPageSize);
+  if (__notifPage > totalPages) __notifPage = totalPages;
+  if (__notifPage < 1) __notifPage = 1;
+  var start = (__notifPage - 1) * __notifPageSize;
+  var pageItems = filtered.slice(start, start + __notifPageSize);
   var html = '';
-  displayNots.forEach(function(n) {
+  pageItems.forEach(function(n) {
     var isUnread = (n.ReadStatus || '').toLowerCase() !== 'read';
     var mod = n.Module || 'System';
     var notifType = n.NotificationType || 'Information';
     var typeCfg = notifTypeColors[notifType] || notifTypeColors['Information'];
     var typeIcon = notifTypeIcons[notifType] || defaultNotifIcon;
-    var modIcon = moduleIcons[mod] || defaultNotifIcon;
     var priBadge = priorityBadgeMap[n.Priority] || 'primary';
     var dt = n.CreatedDateTime || '';
     var timeAgo = getTimeAgo(dt);
@@ -1982,10 +2000,25 @@ function renderNotifications() {
         '</div>' +
       '</div>';
   });
-  if (filtered.length > maxPanelItems) {
-    html += '<div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted)">+' + (filtered.length - maxPanelItems) + ' more. <a href="#" onclick="navigateTo(\'notifications\');toggleNotificationPanel();return false">View all</a></div>';
-  }
   list.innerHTML = html;
+  if (footer) {
+    if (totalPages > 1) {
+      var pg = '';
+      pg += '<button class="btn btn-xs btn-secondary" onclick="notifGoPage(' + (__notifPage - 1) + ')"' + (__notifPage <= 1 ? ' disabled' : '') + '>Prev</button>';
+      for (var p = 1; p <= totalPages; p++) {
+        pg += '<button class="btn btn-xs' + (p === __notifPage ? ' btn-primary' : ' btn-secondary') + '" onclick="notifGoPage(' + p + ')">' + p + '</button>';
+      }
+      pg += '<button class="btn btn-xs btn-secondary" onclick="notifGoPage(' + (__notifPage + 1) + ')"' + (__notifPage >= totalPages ? ' disabled' : '') + '>Next</button>';
+      footer.innerHTML = pg;
+    } else {
+      footer.innerHTML = '';
+    }
+  }
+}
+
+function notifGoPage(p) {
+  __notifPage = p;
+  renderNotifications();
 }
 
 function handleNotifClick(id, actionUrl) {
@@ -1998,47 +2031,47 @@ function handleNotifClick(id, actionUrl) {
 }
 
 function markSingleNotificationRead(id) {
-  google.script.run
-    .withSuccessHandler(function() {
-      loadNotifications();
-    })
-    .withFailureHandler(function() {})
-    .markNotificationRead(id);
+  for (var i = 0; i < notifications.length; i++) {
+    if (notifications[i].NotificationID === id) {
+      if ((notifications[i].ReadStatus || '').toLowerCase() !== 'read') {
+        notifications[i].ReadStatus = 'Read';
+        unreadCount = notifications.filter(function(n) { return (n.ReadStatus || '').toLowerCase() !== 'read'; }).length;
+        updateNotificationBadge();
+        renderNotifications();
+      }
+      break;
+    }
+  }
+  google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).markNotificationRead(id);
 }
 
 function markAllNotifRead() {
   var email = (currentUser && currentUser.email) || '';
-  google.script.run
-    .withSuccessHandler(function() {
-      loadNotifications();
-    })
-    .withFailureHandler(function() {})
-    .markAllNotificationsRead(email);
+  notifications.forEach(function(n) { n.ReadStatus = 'Read'; });
+  unreadCount = 0;
+  updateNotificationBadge();
+  renderNotifications();
+  google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).markAllNotificationsRead(email);
 }
 
 function deleteSingleNotification(id) {
   showConfirm('Delete Notification', 'Are you sure you want to delete this notification?', function() {
-    google.script.run
-      .withSuccessHandler(function() {
-        loadNotifications();
-      })
-      .withFailureHandler(function() {})
-      .deleteNotification(id);
+    notifications = notifications.filter(function(n) { return n.NotificationID !== id; });
+    unreadCount = notifications.filter(function(n) { return (n.ReadStatus || '').toLowerCase() !== 'read'; }).length;
+    updateNotificationBadge();
+    renderNotifications();
+    google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).deleteNotification(id);
   });
 }
 
 function deleteAllNotifications() {
   var email = (currentUser && currentUser.email) || '';
   showConfirm('Clear Notifications', 'Are you sure you want to delete your notifications?', function() {
-    google.script.run
-      .withSuccessHandler(function() {
-        notifications = [];
-        unreadCount = 0;
-        updateNotificationBadge();
-        renderNotifications();
-      })
-      .withFailureHandler(function() {})
-      .clearAllNotifications(email);
+    notifications = [];
+    unreadCount = 0;
+    updateNotificationBadge();
+    renderNotifications();
+    google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).clearAllNotifications(email);
   });
 }
 
@@ -2242,21 +2275,26 @@ function getBadgeColorStyle(count) {
 
 function updateSidebarCounters(data) {
   var map = {
-    'openjobcard':     { count: data.openJobCards,     status: 'open' },
-    'startjobcard':    { count: data.startedJobCards,  status: 'running' },
-    'pendingjobcard':  { count: data.pendingJobCards,  status: 'pending' },
-    'closejobcard':    { count: data.closedJobCards,   status: 'closed' },
-    'approvejobcard':  { count: data.approvedJobCards, status: 'approved' },
-    'pm':              { count: data.pendingPM,        status: 'all' },
-    'inventory':       { count: data.inventoryAlerts,  status: 'all' },
-    'goodsreceipt':    { count: data.pendingGR,        status: 'all' }
+    'openjobcard':     { count: data.openJobCards || 0,     status: 'open' },
+    'startjobcard':    { count: data.startedJobCards || 0,  status: 'running' },
+    'closejobcard':    { count: data.closedJobCards || 0,   status: 'closed' },
+    'pendingjobcard':  { count: data.pendingJobCards || 0,  status: 'pending' },
+    'approvejobcard':  { count: data.approvedJobCards || 0, status: 'approved' },
+    'pm':              { count: data.pendingPM || 0,        status: 'all' },
+    'inventory':       { count: data.inventoryAlerts || 0,  status: 'all' },
+    'goodsreceipt':    { count: data.pendingGR || 0,        status: 'all' }
   };
   for (var key in map) {
     var el = document.getElementById('badge-' + key);
     if (!el) continue;
     var item = map[key];
     var count = item.count || 0;
+    if (key === 'openjobcard') {
+      el.style.display = 'none';
+      continue;
+    }
     el.textContent = count > 99 ? '99+' : count;
+    el.style.display = '';
     if (count === 0) {
       el.className = 'sidebar-badge badge-zero';
     } else {

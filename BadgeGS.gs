@@ -6,19 +6,15 @@ function getSidebarCounts(email) {
   var spData = getAllData(CONFIG.SHEET_NAMES.SPARE_PARTS) || [];
   var grData = getAllData(CONFIG.SHEET_NAMES.GOODS_RECEIPT) || [];
 
-  var openJobs = 0, startedJobs = 0, pendingJobs = 0, closedJobs = 0, approvedJobs = 0;
+  var openCount = 0, runningCount = 0, closedCount = 0, pendingCount = 0, approvedCount = 0;
   for (var i = 0; i < jcData.length; i++) {
     var jc = jcData[i];
     var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
-    if (s === 'open') openJobs++;
-    else if (s === 'running' || s === 'in progress') startedJobs++;
-    else if (s === 'pending') pendingJobs++;
-    else if (s === 'closed' || s === 'completed') {
-      var as = (jc.ApprovalStatus || '').toLowerCase();
-      if (as === 'approved') approvedJobs++;
-      else closedJobs++;
-    }
-    else if (s === 'approved') approvedJobs++;
+    if (s === 'open') openCount++;
+    else if (s === 'running' || s === 'in progress') runningCount++;
+    else if (s === 'closed' || s === 'completed') closedCount++;
+    else if (s === 'pending') pendingCount++;
+    else if (s === 'approved') approvedCount++;
   }
 
   var unreadNotifications = 0;
@@ -76,11 +72,12 @@ function getSidebarCounts(email) {
   } catch(e) {}
 
   return {
-    openJobCards: openJobs,
-    startedJobCards: startedJobs,
-    pendingJobCards: pendingJobs,
-    closedJobCards: closedJobs,
-    approvedJobCards: approvedJobs,
+    openJobCards: 0,
+    startedJobCards: openCount,
+    closedJobCards: runningCount,
+    pendingJobCards: pendingCount,
+    approvedJobCards: approvedCount,
+    totalJobCards: jcData.length,
     pendingPM: overduePM + upcomingPM,
     inventoryAlerts: lowStock + outOfStock,
     pendingGR: pendingGR,

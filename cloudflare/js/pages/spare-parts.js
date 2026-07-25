@@ -147,7 +147,7 @@ var SpareParts = (function() {
   }
 
   function formatCurrency(val) {
-    return parseFloat(val || 0).toFixed(2);
+    return 'Rs. ' + parseFloat(val || 0).toFixed(2);
   }
 
   function renderTableLocal(data, columns, actions, page, pageSize, containerId) {

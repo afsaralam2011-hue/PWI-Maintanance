@@ -4,6 +4,12 @@ var Dashboard = {
   _kpiTimer: null,
   _kpiToggleState: 0,
   _kpiCards: {},
+  _notifPage: 1,
+  _notifPageSize: 5,
+  _notifAllItems: [],
+  _activityPage: 1,
+  _activityPageSize: 5,
+  _activityAllItems: [],
 
   init: function(el) {
     el.innerHTML = Dashboard.html();
@@ -42,6 +48,8 @@ var Dashboard = {
       '<div class="stat-card stat-info"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 18l3 3 3-3"/><path d="M4 12h2l3-9 3 9h2"/></svg></div><div class="stat-info"><h3 id="statMTTR">N/A</h3><p>MTTR (hrs)</p></div></div></div>' +
       '<div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 18l3 3 3-3"/><path d="M20 12h-2l-3-9L9 3l-3 9H4"/></svg></div><div class="stat-info"><h3 id="statMTBF">N/A</h3><p>MTBF (hrs)</p></div></div></div>' +
       '<div class="stat-card stat-primary"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-info"><h3 id="statAvailability">0%</h3><p>Availability</p></div></div></div>' +
+      '<div class="stat-card stat-danger"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div><div class="stat-info"><h3 id="statBreakdownMaint">0</h3><p>Breakdown Maint.</p></div></div></div>' +
+      '<div class="stat-card stat-success"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-info"><h3 id="statPreventiveMaint">0</h3><p>Preventive Maint.</p></div></div></div>' +
       '<div class="stat-card stat-purple"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-info"><h3 id="statPMDue">0</h3><p>PM Due</p></div></div></div>' +
       '<div class="stat-card stat-orange"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4M12 16h.01"/></svg></div><div class="stat-info"><h3 id="statPMOverdue">0</h3><p>PM Overdue</p></div></div></div>' +
       '<div class="stat-card stat-primary"><div class="stat-inner"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div><div class="stat-info"><h3 id="statLowStock">0</h3><p>Low Stock Parts</p></div></div></div>' +
@@ -123,13 +131,15 @@ var Dashboard = {
   },
 
   loadNotifications: function() {
+    Dashboard._notifPage = 1;
     var user = Session.getUser();
     var email = user ? user.email : '';
 
     API.post('getNotifications', {})
       .then(function(result) {
         var items = Array.isArray(result) ? result : (result.data || result.records || []);
-        Dashboard._renderNotifications(items.slice(0, 10));
+        Dashboard._notifAllItems = items;
+        Dashboard._renderNotifications();
         var unread = 0, critical = 0, approval = 0;
         for (var i = 0; i < items.length; i++) {
           if ((items[i].ReadStatus || '').toLowerCase() !== 'read') unread++;
@@ -146,13 +156,37 @@ var Dashboard = {
       });
   },
 
-  _renderNotifications: function(items) {
+  _updateNotifCounters: function() {
+    var unread = 0, critical = 0, approval = 0;
+    for (var i = 0; i < Dashboard._notifAllItems.length; i++) {
+      var item = Dashboard._notifAllItems[i];
+      if ((item.ReadStatus || '').toLowerCase() !== 'read') unread++;
+      if (item.Priority === 'Critical') critical++;
+      if (item.NotificationType === 'Approval' || (item.Title && item.Title.toLowerCase().indexOf('approval') > -1)) approval++;
+    }
+    Dashboard._setText('dashNotifUnreadNum', unread);
+    Dashboard._setText('dashNotifCriticalNum', critical);
+    Dashboard._setText('dashNotifApprovalNum', approval);
+  },
+
+  _renderNotifications: function() {
     var el = document.getElementById('dashboardNotifications');
     if (!el) return;
-    if (!items || items.length === 0) {
-      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No notifications</div>';
+    var allUnread = [];
+    for (var i = 0; i < Dashboard._notifAllItems.length; i++) {
+      if ((Dashboard._notifAllItems[i].ReadStatus || '').toLowerCase() !== 'read') {
+        allUnread.push(Dashboard._notifAllItems[i]);
+      }
+    }
+    if (allUnread.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No unread notifications</div>';
       return;
     }
+    var totalPages = Math.ceil(allUnread.length / Dashboard._notifPageSize);
+    if (Dashboard._notifPage > totalPages) Dashboard._notifPage = totalPages;
+    if (Dashboard._notifPage < 1) Dashboard._notifPage = 1;
+    var start = (Dashboard._notifPage - 1) * Dashboard._notifPageSize;
+    var pageItems = allUnread.slice(start, start + Dashboard._notifPageSize);
     var typeColors = {
       'Information': { color: '#06b6d4', bg: 'rgba(6,182,212,0.11)' },
       'Success': { color: '#22c55e', bg: 'rgba(34,197,94,0.11)' },
@@ -164,16 +198,15 @@ var Dashboard = {
     };
     var priorityBadge = { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' };
     var html = '<div style="display:flex;flex-direction:column;gap:6px">';
-    for (var i = 0; i < items.length; i++) {
-      var n = items[i];
+    for (var i = 0; i < pageItems.length; i++) {
+      var n = pageItems[i];
       var notifType = n.NotificationType || 'Information';
       var tc = typeColors[notifType] || typeColors['Information'];
       var priBadge = priorityBadge[n.Priority] || 'primary';
-      var isUnread = (n.ReadStatus || '').toLowerCase() !== 'read';
       var dt = n.CreatedDateTime || '';
       var displayDt = dt ? Utils.timeAgo(dt) : '';
       html +=
-        '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-input);' + (isUnread ? 'border-left:3px solid var(--primary);background:var(--primary-light);' : '') + 'cursor:pointer" onclick="Dashboard._handleNotifClick(\'' + (n.NotificationID || '') + '\',\'' + (n.ActionURL || '') + '\')">' +
+        '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);border-left:3px solid var(--primary);background:var(--primary-light)">' +
           '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:' + tc.bg + ';color:' + tc.color + ';font-size:12px;font-weight:700">' + notifType.charAt(0) + '</div>' +
           '<div style="flex:1;min-width:0">' +
             '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + Utils.escapeHtml(n.Title) + '</div>' +
@@ -183,17 +216,74 @@ var Dashboard = {
               '<span>' + displayDt + '</span>' +
             '</div>' +
           '</div>' +
+          '<button class="btn btn-xs btn-primary" onclick="Dashboard._notifView(\'' + (n.NotificationID || '') + '\')" style="flex-shrink:0;font-size:10px;padding:3px 8px">View</button>' +
         '</div>';
     }
     html += '</div>';
+    if (totalPages > 1) {
+      html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:6px">';
+      html += '<button class="btn btn-xs btn-secondary" onclick="Dashboard._notifGoPage(' + (Dashboard._notifPage - 1) + ')"' + (Dashboard._notifPage <= 1 ? ' disabled' : '') + '>Previous</button>';
+      html += '<span style="font-size:11px;color:var(--text-muted)">Page ' + Dashboard._notifPage + ' of ' + totalPages + '</span>';
+      html += '<button class="btn btn-xs btn-secondary" onclick="Dashboard._notifGoPage(' + (Dashboard._notifPage + 1) + ')"' + (Dashboard._notifPage >= totalPages ? ' disabled' : '') + '>Next</button>';
+      html += '</div>';
+    }
     el.innerHTML = html;
   },
 
+  _notifGoPage: function(p) {
+    Dashboard._notifPage = p;
+    Dashboard._renderNotifications();
+  },
+
+  _notifView: function(id) {
+    var item = null;
+    for (var i = 0; i < Dashboard._notifAllItems.length; i++) {
+      if (Dashboard._notifAllItems[i].NotificationID === id) {
+        item = Dashboard._notifAllItems[i];
+        break;
+      }
+    }
+    if (!item) return;
+    var typeColors = {
+      'Information': '#06b6d4', 'Success': '#22c55e', 'Warning': '#f59e0b',
+      'Critical': '#ef4444', 'Approval': '#a855f7', 'Reminder': '#f97316', 'System': '#9498b8'
+    };
+    var notifType = item.NotificationType || 'Information';
+    var color = typeColors[notifType] || '#06b6d4';
+    var dt = item.CreatedDateTime || '';
+    var displayDate = dt ? new Date(dt).toLocaleString() : 'N/A';
+    var bodyHtml =
+      '<div style="display:flex;flex-direction:column;gap:14px">' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Title</div><div style="font-size:14px;font-weight:600;color:var(--text)">' + Utils.escapeHtml(item.Title || '') + '</div></div>' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Message</div><div style="font-size:13px;color:var(--text);line-height:1.5">' + Utils.escapeHtml(item.Message || item.Body || '') + '</div></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+          '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Date</div><div style="font-size:13px;color:var(--text)">' + displayDate + '</div></div>' +
+          '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Severity</div><div><span class="badge" style="background:' + color + '20;color:' + color + ';padding:3px 8px;border-radius:4px;font-size:12px">' + Utils.escapeHtml(notifType) + '</span></div></div>' +
+          '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Source</div><div style="font-size:13px;color:var(--text)">' + Utils.escapeHtml(item.Module || 'System') + '</div></div>' +
+          '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Reference Number</div><div style="font-size:13px;color:var(--text)">' + Utils.escapeHtml(item.NotificationID || item.ReferenceNumber || 'N/A') + '</div></div>' +
+        '</div>' +
+      '</div>';
+    Dashboard._showDetailModal('Notification Details', bodyHtml, function() {
+      for (var j = 0; j < Dashboard._notifAllItems.length; j++) {
+        if (Dashboard._notifAllItems[j].NotificationID === id) {
+          Dashboard._notifAllItems[j].ReadStatus = 'Read';
+          break;
+        }
+      }
+      Dashboard._updateNotifCounters();
+      Dashboard._renderNotifications();
+      API.post('markNotificationRead', { id: id }).catch(function() {});
+      if (typeof Badge !== 'undefined') Badge.refresh();
+    });
+  },
+
   loadActivities: function() {
+    Dashboard._activityPage = 1;
     API.post('getAuditLogs', {})
       .then(function(data) {
         var items = Array.isArray(data) ? data : [];
-        Dashboard._renderActivities(items.slice(0, 10));
+        Dashboard._activityAllItems = items;
+        Dashboard._renderActivities();
       })
       .catch(function() {
         var el = document.getElementById('dashboardRecentActivities');
@@ -201,13 +291,18 @@ var Dashboard = {
       });
   },
 
-  _renderActivities: function(items) {
+  _renderActivities: function() {
     var el = document.getElementById('dashboardRecentActivities');
     if (!el) return;
-    if (!items || items.length === 0) {
+    if (!Dashboard._activityAllItems || Dashboard._activityAllItems.length === 0) {
       el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No recent activities</div>';
       return;
     }
+    var totalPages = Math.ceil(Dashboard._activityAllItems.length / Dashboard._activityPageSize);
+    if (Dashboard._activityPage > totalPages) Dashboard._activityPage = totalPages;
+    if (Dashboard._activityPage < 1) Dashboard._activityPage = 1;
+    var start = (Dashboard._activityPage - 1) * Dashboard._activityPageSize;
+    var pageItems = Dashboard._activityAllItems.slice(start, start + Dashboard._activityPageSize);
     var actionIcons = {
       'Login': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M9 3H5a2 2 0 00-2 2v10a2 2 0 002 2h4"/><polyline points="13 7 17 11 13 15"/><line x1="9" y1="11" x2="17" y2="11"/></svg>',
       'Logout': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M11 3H7a2 2 0 00-2 2v10a2 2 0 002 2h4"/><polyline points="17 7 13 11 17 15"/><line x1="13" y1="11" x2="5" y2="11"/></svg>',
@@ -223,13 +318,14 @@ var Dashboard = {
       'Cancel': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><line x1="15" y1="5" x2="5" y2="15"/></svg>'
     };
     var html = '<div style="display:flex;flex-direction:column;gap:4px">';
-    for (var i = 0; i < items.length; i++) {
-      var r = items[i];
+    for (var i = 0; i < pageItems.length; i++) {
+      var r = pageItems[i];
       var icon = actionIcons[r.Action] || '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><path d="M9 9h2v5"/><path d="M9 12h3"/></svg>';
       var dt = r.DateTime || '';
       var displayDt = dt ? Utils.timeAgo(dt) : '';
+      var globalIdx = start + i;
       html +=
-        '<div style="display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:var(--radius-sm);background:var(--bg-input);cursor:default" onclick="navigateTo(\'audit\')">' +
+        '<div style="display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:var(--radius-sm);background:var(--bg-input)">' +
           '<div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--primary-light);color:var(--primary);font-size:11px">' + icon + '</div>' +
           '<div style="flex:1;min-width:0">' +
             '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
@@ -240,10 +336,52 @@ var Dashboard = {
               Utils.escapeHtml(r.UserName || '') + ' &middot; ' + displayDt +
             '</div>' +
           '</div>' +
+          '<button class="btn btn-xs btn-primary" onclick="Dashboard._activityView(' + globalIdx + ')" style="flex-shrink:0;font-size:10px;padding:3px 8px">View</button>' +
         '</div>';
     }
     html += '</div>';
+    if (totalPages > 1) {
+      html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:6px">';
+      html += '<button class="btn btn-xs btn-secondary" onclick="Dashboard._activityGoPage(' + (Dashboard._activityPage - 1) + ')"' + (Dashboard._activityPage <= 1 ? ' disabled' : '') + '>Previous</button>';
+      html += '<span style="font-size:11px;color:var(--text-muted)">Page ' + Dashboard._activityPage + ' of ' + totalPages + '</span>';
+      html += '<button class="btn btn-xs btn-secondary" onclick="Dashboard._activityGoPage(' + (Dashboard._activityPage + 1) + ')"' + (Dashboard._activityPage >= totalPages ? ' disabled' : '') + '>Next</button>';
+      html += '</div>';
+    }
     el.innerHTML = html;
+  },
+
+  _activityGoPage: function(p) {
+    Dashboard._activityPage = p;
+    Dashboard._renderActivities();
+  },
+
+  _activityView: function(idx) {
+    var item = Dashboard._activityAllItems[idx];
+    if (!item) return;
+    var actionColors = {
+      'Login': '#22c55e', 'Logout': '#94a3b8', 'Create': '#06b6d4', 'Update': '#f59e0b',
+      'Delete': '#ef4444', 'Approve': '#a855f7', 'Reject': '#ef4444', 'Open': '#3b82f6',
+      'Start': '#22c55e', 'Close': '#f97316', 'Complete': '#22c55e', 'Cancel': '#ef4444'
+    };
+    var action = item.Action || 'Unknown';
+    var color = actionColors[action] || '#94a3b8';
+    var dt = item.DateTime || '';
+    var displayDate = dt ? new Date(dt).toLocaleString() : 'N/A';
+    var bodyHtml =
+      '<div style="display:flex;flex-direction:column;gap:14px">' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Action</div><div><span class="badge" style="background:' + color + '20;color:' + color + ';padding:3px 10px;border-radius:4px;font-size:13px;font-weight:600">' + Utils.escapeHtml(action) + '</span></div></div>' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Module</div><div style="font-size:14px;font-weight:600;color:var(--text)">' + Utils.escapeHtml(item.Module || 'N/A') + '</div></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+          '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">User</div><div style="font-size:13px;color:var(--text)">' + Utils.escapeHtml(item.UserName || 'N/A') + '</div></div>' +
+          '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Date & Time</div><div style="font-size:13px;color:var(--text)">' + displayDate + '</div></div>' +
+        '</div>' +
+        (item.Description || item.Details ? '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Details</div><div style="font-size:13px;color:var(--text);line-height:1.5">' + Utils.escapeHtml(item.Description || item.Details || '') + '</div></div>' : '') +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Reference Number</div><div style="font-size:13px;color:var(--text)">' + Utils.escapeHtml(item.AuditID || item.ReferenceNumber || 'N/A') + '</div></div>' +
+      '</div>';
+    Dashboard._showDetailModal('Activity Details', bodyHtml, function() {
+      Dashboard._activityAllItems.splice(idx, 1);
+      Dashboard._renderActivities();
+    });
   },
 
   _setText: function(id, v) {
@@ -251,22 +389,34 @@ var Dashboard = {
     if (el) el.textContent = v;
   },
 
-  _formatCurrency: function(val) {
-    var v = Math.round(val || 0);
-    if (v >= 1000000000) return 'Rs. ' + (v / 1000000000).toFixed(1) + 'B';
-    if (v >= 1000000) return 'Rs. ' + (v / 1000000).toFixed(1) + 'M';
-    if (v >= 1000) return 'Rs. ' + (v / 1000).toFixed(0) + 'K';
-    return 'Rs. ' + v.toLocaleString('en-PK');
+  _showDetailModal: function(title, bodyHtml, onClose) {
+    var existing = document.getElementById('dashDetailModal');
+    if (existing) existing.remove();
+    var backdrop = document.createElement('div');
+    backdrop.id = 'dashDetailModal';
+    backdrop.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;backdrop-filter:blur(4px)';
+    backdrop.innerHTML =
+      '<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;width:90%;max-width:520px;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5)">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)">' +
+          '<div style="font-size:15px;font-weight:600;color:var(--text)">' + title + '</div>' +
+          '<button onclick="Dashboard._closeDetailModal()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:0 4px">&times;</button>' +
+        '</div>' +
+        '<div style="padding:20px">' + bodyHtml + '</div>' +
+        '<div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end">' +
+          '<button class="btn btn-secondary" onclick="Dashboard._closeDetailModal()">Close</button>' +
+        '</div>' +
+      '</div>';
+    backdrop.onclick = function(e) { if (e.target === backdrop) Dashboard._closeDetailModal(); };
+    document.body.appendChild(backdrop);
+    backdrop._onClose = onClose || null;
   },
 
-  _handleNotifClick: function(id, actionUrl) {
-    if (id) {
-      API.post('markNotificationRead', { id: id }).catch(function() {});
-    }
-    if (actionUrl) {
-      try { eval(actionUrl); } catch(e) {}
-    }
-    Dashboard.loadNotifications();
+  _closeDetailModal: function() {
+    var backdrop = document.getElementById('dashDetailModal');
+    if (!backdrop) return;
+    var cb = backdrop._onClose;
+    backdrop.remove();
+    if (typeof cb === 'function') cb();
   },
 
   _renderStats: function(data) {
@@ -287,13 +437,15 @@ var Dashboard = {
     Dashboard._setText('statMTTR', data.mttr !== null && data.mttr !== undefined ? data.mttr : 'N/A');
     Dashboard._setText('statMTBF', data.mtbf !== null && data.mtbf !== undefined ? data.mtbf : 'N/A');
     Dashboard._setText('statAvailability', (data.availability || 0) + '%');
+    Dashboard._setText('statBreakdownMaint', data.breakdownMaintenanceCount || 0);
+    Dashboard._setText('statPreventiveMaint', data.preventiveMaintenanceCount || 0);
     Dashboard._setText('statPMDue', data.pmDue);
     Dashboard._setText('statPMOverdue', data.pmOverdue);
     Dashboard._setText('statLowStock', data.lowStockParts);
     Dashboard._setText('statOutOfStock', data.outOfStockParts);
     Dashboard._setText('statPMCompliance', (data.pmCompliance || 0) + '%');
     Dashboard._setText('statQRGenerated', data.qrGenerated);
-    Dashboard._setText('statStockValue', Dashboard._formatCurrency(data.totalStockValue));
+    Dashboard._setText('statStockValue', Utils.formatCurrencyPKR(data.totalStockValue));
   },
 
   _kpiFormatHours: function(minutes) {

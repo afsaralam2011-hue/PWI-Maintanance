@@ -79,5 +79,13 @@ var Utils = {
 
   generateId: function(prefix) {
     return (prefix || 'ID') + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  },
+
+  formatCurrencyPKR: function(value) {
+    var v = Math.round(Math.abs(parseFloat(value) || 0));
+    if (v >= 1000000000) return 'Rs. ' + (v / 1000000000).toFixed(2) + 'B';
+    if (v >= 1000000) return 'Rs. ' + (v / 1000000).toFixed(2) + 'M';
+    if (v >= 1000) return 'Rs. ' + (v / 1000).toFixed(0) + 'K';
+    return 'Rs. ' + v;
   }
 };

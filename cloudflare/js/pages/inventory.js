@@ -98,7 +98,7 @@ var Inventory = (function() {
   }
 
   function formatCurrency(val) {
-    return parseFloat(val || 0).toFixed(2);
+    return 'Rs. ' + parseFloat(val || 0).toFixed(2);
   }
 
   function renderTableLocal(data, columns, actions, page, pageSize, containerId) {
@@ -551,7 +551,7 @@ var Inventory = (function() {
   function updateInvDashboard(data) {
     if (!data) return;
     var el;
-    el = document.getElementById('invTotalStockValue'); if (el) el.textContent = parseFloat(data.totalStockValue || 0).toFixed(2);
+    el = document.getElementById('invTotalStockValue'); if (el) el.textContent = Utils.formatCurrencyPKR(data.totalStockValue);
     el = document.getElementById('invLowStockCount'); if (el) el.textContent = data.lowStockCount || 0;
     el = document.getElementById('invOutOfStockCount'); if (el) el.textContent = data.outOfStockCount || 0;
     el = document.getElementById('invTotalTransactions'); if (el) el.textContent = (invData && invData.length) || 0;
@@ -579,7 +579,7 @@ var Inventory = (function() {
           '<div class="stat-card stat-primary" onclick="Inventory.switchInvTab(\'all\', document.querySelector(\'#inventoryPage .workflow-tab[data-tab=all]\'))" style="cursor:pointer">' +
             '<div class="stat-inner">' +
               '<div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg></div>' +
-              '<div class="stat-info"><h3 id="invTotalStockValue">0.00</h3><p>Total Stock Value</p></div>' +
+              '<div class="stat-info"><h3 id="invTotalStockValue">Rs. 0</h3><p>Total Stock Value</p></div>' +
             '</div>' +
           '</div>' +
           '<div class="stat-card stat-warning" style="cursor:pointer">' +

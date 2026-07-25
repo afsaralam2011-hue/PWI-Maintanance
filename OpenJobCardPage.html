@@ -75,6 +75,19 @@
         </div>
       </div>
 
+      <div class="form-row">
+        <div class="form-group">
+          <label>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Breakdown Type *
+          </label>
+          <select name="BreakdownType" class="form-control" id="jcBreakdownType" required>
+            <option value="">Select Breakdown Type</option>
+          </select>
+        </div>
+        <div class="form-group"></div>
+      </div>
+
       <div class="form-group">
         <label>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -164,12 +177,13 @@ var jcSections = [];
 var jcDepartments = [];
 var jcMachines = [];
 var jcAssets = [];
+var jcBreakdownTypes = [];
 
 function loadOpenJobCardsData() {
   showLoading(true);
-  var loaded = { sections: false, departments: false, machines: false, assets: false };
+  var loaded = { sections: false, departments: false, machines: false, assets: false, breakdownTypes: false };
   function checkDone() {
-    if (loaded.sections && loaded.departments && loaded.machines && loaded.assets) {
+    if (loaded.sections && loaded.departments && loaded.machines && loaded.assets && loaded.breakdownTypes) {
       showLoading(false);
       populateOpenForm();
       setTimeout(function() { addVoiceButton('jcComplaintDesc'); }, 100);
@@ -207,6 +221,14 @@ function loadOpenJobCardsData() {
     })
     .withFailureHandler(function() { loaded.assets = true; checkDone(); showToast('Failed to load assets', 'error'); })
     .getAssets();
+  google.script.run
+    .withSuccessHandler(function(data) {
+      jcBreakdownTypes = data || [];
+      loaded.breakdownTypes = true;
+      checkDone();
+    })
+    .withFailureHandler(function() { loaded.breakdownTypes = true; checkDone(); showToast('Failed to load breakdown types', 'error'); })
+    .getActiveBreakdownTypes();
 }
 
 function populateOpenForm() {
@@ -218,6 +240,17 @@ function populateOpenForm() {
     opt.textContent = s.Section || '';
     secSel.appendChild(opt);
   });
+
+  var bdSel = document.getElementById('jcBreakdownType');
+  if (bdSel) {
+    bdSel.innerHTML = '<option value="">Select Breakdown Type</option>';
+    jcBreakdownTypes.forEach(function(bt) {
+      var opt = document.createElement('option');
+      opt.value = bt.TypeName || '';
+      opt.textContent = bt.TypeName || '';
+      bdSel.appendChild(opt);
+    });
+  }
 
   var el = document.getElementById('jcComplaintBy'); if (el) el.value = currentUser ? currentUser.name : '';
 
@@ -369,6 +402,7 @@ function saveJobCard(e) {
   if (!data.ComplaintCategory) { showToast('Please select a Complaint Category', 'error'); return; }
   if (!data.ComplaintDescription) { showToast('Please enter a Complaint Description', 'error'); return; }
   if (!data.Priority) { showToast('Please select a Priority', 'error'); return; }
+  if (!data.BreakdownType) { showToast('Please select a Breakdown Type', 'error'); return; }
 
   if (typeof OfflineSync !== 'undefined' && !OfflineSync.isOnline()) {
     OfflineSync.add({ fn: 'addJobCard', args: [data] });

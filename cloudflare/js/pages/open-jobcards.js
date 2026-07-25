@@ -1,5 +1,5 @@
 var OpenJobCard = (function() {
-  var state = { sections: [], departments: [], machines: [], assets: [] };
+  var state = { sections: [], departments: [], machines: [], assets: [], breakdownTypes: [] };
 
   var COMPLAINT_CATEGORIES = [
     'Mechanical Failure', 'Electrical Failure', 'Hydraulic Failure',
@@ -82,6 +82,15 @@ var OpenJobCard = (function() {
               '</select>' +
             '</div>' +
           '</div>' +
+          '<div class="form-row">' +
+            '<div class="form-group">' +
+              '<label>' + ICON_BRIEFCASE + ' Breakdown Type *</label>' +
+              '<select name="BreakdownType" class="form-control" id="jcBreakdownType" required>' +
+                '<option value="">Select Breakdown Type</option>' +
+              '</select>' +
+            '</div>' +
+            '<div class="form-group"></div>' +
+          '</div>' +
           '<div class="form-group">' +
             '<label>' + ICON_CHAT + ' Complaint Description *</label>' +
             '<textarea name="ComplaintDescription" id="jcComplaintDesc" class="form-control" rows="4" placeholder="Describe the issue in detail..." required></textarea>' +
@@ -147,10 +156,10 @@ var OpenJobCard = (function() {
 
   function loadData() {
     Loader.show();
-    var loaded = { sections: false, departments: false, machines: false, assets: false };
+    var loaded = { sections: false, departments: false, machines: false, assets: false, breakdownTypes: false };
 
     function checkDone() {
-      if (loaded.sections && loaded.departments && loaded.machines && loaded.assets) {
+      if (loaded.sections && loaded.departments && loaded.machines && loaded.assets && loaded.breakdownTypes) {
         Loader.hide();
         populateForm();
       }
@@ -195,6 +204,16 @@ var OpenJobCard = (function() {
       checkDone();
       Notify.error('Failed to load assets');
     });
+
+    API.post('getBreakdownTypes', {}).then(function(data) {
+      state.breakdownTypes = Array.isArray(data) ? data.filter(function(t) { return t.Status === 'Active'; }) : [];
+      loaded.breakdownTypes = true;
+      checkDone();
+    }).catch(function() {
+      loaded.breakdownTypes = true;
+      checkDone();
+      Notify.error('Failed to load breakdown types');
+    });
   }
 
   function populateForm() {
@@ -228,6 +247,17 @@ var OpenJobCard = (function() {
         opt.value = cat;
         opt.textContent = cat;
         catSel.appendChild(opt);
+      });
+    }
+
+    var bdSel = document.getElementById('jcBreakdownType');
+    if (bdSel) {
+      bdSel.innerHTML = '<option value="">Select Breakdown Type</option>';
+      state.breakdownTypes.forEach(function(bt) {
+        var opt = document.createElement('option');
+        opt.value = bt.TypeName || '';
+        opt.textContent = bt.TypeName || '';
+        bdSel.appendChild(opt);
       });
     }
   }
@@ -362,6 +392,7 @@ var OpenJobCard = (function() {
     if (!data.ComplaintCategory) { Notify.error('Please select a Complaint Category'); return false; }
     if (!data.ComplaintDescription) { Notify.error('Please enter a Complaint Description'); return false; }
     if (!data.Priority) { Notify.error('Please select a Priority'); return false; }
+    if (!data.BreakdownType) { Notify.error('Please select a Breakdown Type'); return false; }
 
     var btn = document.getElementById('jcSubmitBtn');
     if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }

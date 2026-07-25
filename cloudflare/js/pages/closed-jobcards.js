@@ -181,18 +181,35 @@ var ClosedJobCard = (function() {
 
   function loadData() {
     Loader.show();
+    var loaded = { jobcards: false, breakdownTypes: false };
+    function checkDone() {
+      if (loaded.jobcards && loaded.breakdownTypes) {
+        Loader.hide();
+        populateSelects();
+        renderTable();
+      }
+    }
     API.post('getJobCards', {}).then(function(data) {
       var records = Array.isArray(data) ? data : (data && Array.isArray(data.records) ? data.records : []);
       state.data = records.filter(function(jc) {
         var s = (jc.CurrentStatus || jc.Status || '').toLowerCase();
         return s === 'running';
       });
-      Loader.hide();
-      populateSelects();
-      renderTable();
+      loaded.jobcards = true;
+      checkDone();
     }).catch(function() {
-      Loader.hide();
+      loaded.jobcards = true;
+      checkDone();
       Notify.error('Failed to load job cards');
+    });
+    API.post('getBreakdownTypes', {}).then(function(data) {
+      state.breakdownTypes = Array.isArray(data) ? data.filter(function(t) { return t.Status === 'Active'; }) : [];
+      loaded.breakdownTypes = true;
+      checkDone();
+    }).catch(function() {
+      loaded.breakdownTypes = true;
+      checkDone();
+      Notify.error('Failed to load breakdown types');
     });
   }
 
@@ -209,22 +226,16 @@ var ClosedJobCard = (function() {
     depts.sort().forEach(function(d) { if (deptFilter) deptFilter.innerHTML += '<option value="' + d + '">' + d + '</option>'; });
     techs.sort().forEach(function(t) { if (techFilter) techFilter.innerHTML += '<option value="' + t + '">' + t + '</option>'; });
 
-    API.post('getBreakdownTypes', {}).then(function(types) {
-      state.breakdownTypes = (types || []).filter(function(t) {
-        var s = (t.Status || '').toLowerCase();
-        return s === 'active';
+    var sel = document.getElementById('closeJcBreakdownType');
+    if (sel) {
+      sel.innerHTML = '<option value="">Select Breakdown Type</option>';
+      state.breakdownTypes.forEach(function(bt) {
+        var opt = document.createElement('option');
+        opt.value = bt.TypeName || '';
+        opt.textContent = bt.TypeName || '';
+        sel.appendChild(opt);
       });
-      var sel = document.getElementById('closeJcBreakdownType');
-      if (sel) {
-        sel.innerHTML = '<option value="">Select Breakdown Type</option>';
-        state.breakdownTypes.forEach(function(t) {
-          var opt = document.createElement('option');
-          opt.value = t.TypeName || '';
-          opt.textContent = t.TypeName || '';
-          sel.appendChild(opt);
-        });
-      }
-    }).catch(function() {});
+    }
   }
 
   function getFilteredData() {

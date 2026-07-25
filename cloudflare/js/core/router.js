@@ -70,12 +70,75 @@ var Router = {
 function navigateTo(page) { Router.navigate(page); }
 function refreshCurrentPage() { Router.navigate(Router.current || 'dashboard'); }
 function onGlobalSearch(val) { /* placeholder for global search */ }
-function onNotifSearchInput() { /* placeholder */ }
-function setNotifListFilter(f) { /* placeholder */ }
-function applyNotifListFilters() { /* placeholder */ }
-function markAllNotifRead() { /* placeholder */ }
-function deleteAllNotifications() { /* placeholder */ }
-function emailRetryFailed() { /* placeholder */ }
+function onNotifSearchInput() {
+  Nav._notifPage = 1;
+  var val = (document.getElementById('notifSearchInput') || {}).value || '';
+  var items = Nav._notifData || [];
+  if (val) {
+    var q = val.toLowerCase();
+    items = items.filter(function(n) {
+      return (n.Title && n.Title.toLowerCase().indexOf(q) > -1) ||
+             (n.Message && n.Message.toLowerCase().indexOf(q) > -1) ||
+             (n.Module && n.Module.toLowerCase().indexOf(q) > -1);
+    });
+  }
+  Nav._renderNotificationList(items);
+}
+function setNotifListFilter(f) {
+  Nav._notifFilter = f;
+  Nav._notifPage = 1;
+  var tabs = document.querySelectorAll('.notif-filter-tab');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.toggle('active', tabs[i].getAttribute('data-filter') === f);
+  }
+  Nav._renderNotificationList(Nav._notifData || []);
+}
+function applyNotifListFilters() {
+  Nav._notifPage = 1;
+  var items = Nav._notifData || [];
+  var pri = (document.getElementById('notifFilterPriority') || {}).value || '';
+  var mod = (document.getElementById('notifFilterModule') || {}).value || '';
+  var typ = (document.getElementById('notifFilterType') || {}).value || '';
+  if (pri) items = items.filter(function(n) { return n.Priority === pri; });
+  if (mod) items = items.filter(function(n) { return n.Module === mod; });
+  if (typ) items = items.filter(function(n) { return n.NotificationType === typ; });
+  Nav._renderNotificationList(items);
+}
+function markAllNotifRead() {
+  Nav._notifPage = 1;
+  API.post('markAllNotificationsRead', {})
+    .then(function() {
+      (Nav._notifData || []).forEach(function(n) { n.ReadStatus = 'Read'; });
+      Nav._renderNotificationList(Nav._notifData);
+      Badge.refresh();
+      if (typeof Dashboard !== 'undefined' && Dashboard.loadNotifications) Dashboard.loadNotifications();
+      Notify.success('All notifications marked as read');
+    })
+    .catch(function() { Notify.error('Failed to mark all as read'); });
+}
+function deleteAllNotifications() {
+  if (!confirm('Clear all notifications? This cannot be undone.')) return;
+  Nav._notifPage = 1;
+  API.post('clearAllNotifications', {})
+    .then(function() {
+      Nav._notifData = [];
+      Nav._renderNotificationList([]);
+      Badge.refresh();
+      if (typeof Dashboard !== 'undefined' && Dashboard.loadNotifications) Dashboard.loadNotifications();
+      Notify.success('All notifications cleared');
+    })
+    .catch(function() { Notify.error('Failed to clear notifications'); });
+}
+function emailRetryFailed() {
+  API.post('emailRetryFailed', {})
+    .then(function(result) {
+      var msg = result ? (result.succeeded || 0) + ' retried, ' + (result.failed || 0) + ' failed' : 'Retry completed';
+      Notify.success(msg);
+      Nav.loadEmailPanelData();
+      Badge.refresh();
+    })
+    .catch(function() { Notify.error('Failed to retry emails'); });
+}
 function openApproveJobCard() { navigateTo('approvejobcard'); }
 function installPWA() {
   var banner = document.getElementById('installBanner');

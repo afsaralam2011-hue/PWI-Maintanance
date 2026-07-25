@@ -258,3 +258,11 @@ function generateJobCardNo() {
     return 'JC-' + fallbackYear + '-000001';
   }
 }
+
+function formatCurrencyPKR(value) {
+  var v = Math.round(Math.abs(parseFloat(value) || 0));
+  if (v >= 1000000000) return 'Rs. ' + (v / 1000000000).toFixed(2) + 'B';
+  if (v >= 1000000) return 'Rs. ' + (v / 1000000).toFixed(2) + 'M';
+  if (v >= 1000) return 'Rs. ' + (v / 1000).toFixed(0) + 'K';
+  return 'Rs. ' + v;
+}

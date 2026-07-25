@@ -109,6 +109,18 @@
         <div class="stat-info"><h3 id="statAvailability">0%</h3><p>Availability</p></div>
       </div>
     </div>
+    <div class="stat-card stat-danger">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+        <div class="stat-info"><h3 id="statBreakdownMaint">0</h3><p>Breakdown Maint.</p></div>
+      </div>
+    </div>
+    <div class="stat-card stat-success">
+      <div class="stat-inner">
+        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="stat-info"><h3 id="statPreventiveMaint">0</h3><p>Preventive Maint.</p></div>
+      </div>
+    </div>
     <div class="stat-card stat-purple">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
@@ -148,7 +160,7 @@
     <div class="stat-card stat-success">
       <div class="stat-inner">
         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
-        <div class="stat-info"><h3 id="statStockValue">$0</h3><p>Inventory Value</p></div>
+        <div class="stat-info"><h3 id="statStockValue">Rs. 0</h3><p>Inventory Value</p></div>
       </div>
     </div>
   </div>
@@ -250,6 +262,12 @@ var dashboardChartsLoaded = false;
 var _kpiTimer = null;
 var _kpiToggleState = 0;
 var _kpiCards = {};
+var dashNotifPage = 1;
+var dashNotifPageSize = 5;
+var dashNotifAllItems = [];
+var dashActivityPage = 1;
+var dashActivityPageSize = 5;
+var dashActivityAllItems = [];
 function _kpiFormatHours(minutes) {
   if (!minutes && minutes !== 0) return '0h 0m';
   var m = Math.round(minutes);
@@ -294,6 +312,37 @@ function _kpiSetCard(id, minutes) {
   if (el) el.textContent = _kpiFormatDays(minutes);
 }
 
+function showDashDetailModal(title, bodyHtml, onClose) {
+  var existing = document.getElementById('dashDetailModal');
+  if (existing) existing.remove();
+  var backdrop = document.createElement('div');
+  backdrop.id = 'dashDetailModal';
+  backdrop.className = 'modal-overlay';
+  backdrop.style.display = 'flex';
+  backdrop.innerHTML =
+    '<div class="modal modal-wide">' +
+      '<div class="modal-header">' +
+        '<div class="modal-title">' + title + '</div>' +
+        '<button class="modal-close" onclick="closeDashDetailModal()">&times;</button>' +
+      '</div>' +
+      '<div class="modal-body">' + bodyHtml + '</div>' +
+      '<div class="modal-footer">' +
+        '<button type="button" class="btn btn-secondary" onclick="closeDashDetailModal()">Close</button>' +
+      '</div>' +
+    '</div>';
+  backdrop.onclick = function(e) { if (e.target === backdrop) closeDashDetailModal(); };
+  document.body.appendChild(backdrop);
+  backdrop._onClose = onClose || null;
+}
+
+function closeDashDetailModal() {
+  var backdrop = document.getElementById('dashDetailModal');
+  if (!backdrop) return;
+  var cb = backdrop._onClose;
+  backdrop.remove();
+  if (typeof cb === 'function') cb();
+}
+
 function loadDashboardData() {
   console.log('loadDashboardData() called, filter:', globalDashboardFilter);
   var cards = document.querySelectorAll('#dashboardCards .stat-info');
@@ -330,13 +379,15 @@ function loadDashboardData() {
       setText('statMTTR', data.mttr !== null && data.mttr !== undefined ? data.mttr : 'N/A');
       setText('statMTBF', data.mtbf !== null && data.mtbf !== undefined ? data.mtbf : 'N/A');
       setText('statAvailability', (data.availability || 0) + '%');
+      setText('statBreakdownMaint', data.breakdownMaintenanceCount || 0);
+      setText('statPreventiveMaint', data.preventiveMaintenanceCount || 0);
       setText('statPMDue', data.pmDue);
       setText('statPMOverdue', data.pmOverdue);
       setText('statLowStock', data.lowStockParts);
       setText('statOutOfStock', data.outOfStockParts);
       setText('statPMCompliance', (data.pmCompliance || 0) + '%');
       setText('statQRGenerated', data.qrGenerated);
-      setText('statStockValue', '$' + (data.totalStockValue || 0).toFixed(2));
+      setText('statStockValue', formatCurrencyPKR(data.totalStockValue));
       console.log('[DASHBOARD DEBUG] _debug:', JSON.stringify(data._debug, null, 2));
 
       drawDashboardCharts(data);
@@ -356,10 +407,12 @@ function setText(id, v) {
 }
 
 function loadDashboardNotifications() {
+  dashNotifPage = 1;
   var email = (currentUser && currentUser.email) || '';
   google.script.run
     .withSuccessHandler(function(result) {
-      renderDashboardNotifications(result.data || []);
+      dashNotifAllItems = result.data || [];
+      renderDashboardNotifications();
       checkForNewNotifications(result);
       if (result.stats) {
         setText('dashNotifUnreadNum', result.stats.unread || 0);
@@ -371,16 +424,39 @@ function loadDashboardNotifications() {
       var el = document.getElementById('dashboardNotifications');
       if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Failed to load</div>';
     })
-    .getDashboardNotifications(10, email);
+    .getDashboardNotifications(50, email);
 }
 
-function renderDashboardNotifications(items) {
+function updateDashNotifCounters() {
+  var unread = 0, critical = 0, approval = 0;
+  for (var j = 0; j < dashNotifAllItems.length; j++) {
+    if ((dashNotifAllItems[j].ReadStatus || '').toLowerCase() !== 'read') unread++;
+    if (dashNotifAllItems[j].Priority === 'Critical') critical++;
+    if (dashNotifAllItems[j].NotificationType === 'Approval' || (dashNotifAllItems[j].Title && dashNotifAllItems[j].Title.toLowerCase().indexOf('approval') > -1)) approval++;
+  }
+  setText('dashNotifUnreadNum', unread);
+  setText('dashNotifCriticalNum', critical);
+  setText('dashNotifApprovalNum', approval);
+}
+
+function renderDashboardNotifications() {
   var el = document.getElementById('dashboardNotifications');
   if (!el) return;
-  if (!items || items.length === 0) {
-    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No notifications</div>';
+  var allUnread = [];
+  for (var i = 0; i < dashNotifAllItems.length; i++) {
+    if ((dashNotifAllItems[i].ReadStatus || '').toLowerCase() !== 'read') {
+      allUnread.push(dashNotifAllItems[i]);
+    }
+  }
+  if (allUnread.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No unread notifications</div>';
     return;
   }
+  var totalPages = Math.ceil(allUnread.length / dashNotifPageSize);
+  if (dashNotifPage > totalPages) dashNotifPage = totalPages;
+  if (dashNotifPage < 1) dashNotifPage = 1;
+  var start = (dashNotifPage - 1) * dashNotifPageSize;
+  var pageItems = allUnread.slice(start, start + dashNotifPageSize);
   var typeColors = {
     'Information': { color: '#06b6d4', bg: 'rgba(6,182,212,0.11)' },
     'Success': { color: '#22c55e', bg: 'rgba(34,197,94,0.11)' },
@@ -392,11 +468,10 @@ function renderDashboardNotifications(items) {
   };
   var priorityBadge = { 'Critical': 'danger', 'High': 'warning', 'Medium': 'info', 'Low': 'success' };
   var html = '<div style="display:flex;flex-direction:column;gap:6px">';
-  items.forEach(function(n) {
+  pageItems.forEach(function(n) {
     var notifType = n.NotificationType || 'Information';
     var tc = typeColors[notifType] || typeColors['Information'];
     var priBadge = priorityBadge[n.Priority] || 'primary';
-    var isUnread = (n.ReadStatus || '').toLowerCase() !== 'read';
     var dt = n.CreatedDateTime || '';
     var displayDt = '';
     if (dt) {
@@ -404,7 +479,7 @@ function renderDashboardNotifications(items) {
       if (!isNaN(d.getTime()) && typeof getTimeAgo === 'function') displayDt = getTimeAgo(dt);
     }
     html +=
-      '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--bg-input);' + (isUnread ? 'border-left:3px solid var(--primary);background:var(--primary-light);' : '') + 'cursor:pointer" onclick="handleNotifClick(\'' + escapeHtml(n.NotificationID) + '\',\'' + escapeHtml(n.ActionURL || '') + '\')">' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);border-left:3px solid var(--primary);background:var(--primary-light)">' +
         '<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:' + tc.bg + ';color:' + tc.color + ';font-size:12px;font-weight:700">' + (notifType.charAt(0)) + '</div>' +
         '<div style="flex:1;min-width:0">' +
           '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(n.Title) + '</div>' +
@@ -414,10 +489,65 @@ function renderDashboardNotifications(items) {
             '<span>' + displayDt + '</span>' +
           '</div>' +
         '</div>' +
+        '<button class="btn btn-xs btn-primary" onclick="dashNotifView(\'' + escapeHtml(n.NotificationID) + '\')" style="flex-shrink:0;font-size:10px;padding:3px 8px">View</button>' +
       '</div>';
   });
   html += '</div>';
+  if (totalPages > 1) {
+    html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:6px">';
+    html += '<button class="btn btn-xs btn-secondary" onclick="dashNotifGoPage(' + (dashNotifPage - 1) + ')"' + (dashNotifPage <= 1 ? ' disabled' : '') + '>Previous</button>';
+    html += '<span style="font-size:11px;color:var(--text-muted)">Page ' + dashNotifPage + ' of ' + totalPages + '</span>';
+    html += '<button class="btn btn-xs btn-secondary" onclick="dashNotifGoPage(' + (dashNotifPage + 1) + ')"' + (dashNotifPage >= totalPages ? ' disabled' : '') + '>Next</button>';
+    html += '</div>';
+  }
   el.innerHTML = html;
+}
+
+function dashNotifGoPage(p) {
+  dashNotifPage = p;
+  renderDashboardNotifications();
+}
+
+function dashNotifView(id) {
+  var item = null;
+  for (var i = 0; i < dashNotifAllItems.length; i++) {
+    if (dashNotifAllItems[i].NotificationID === id) {
+      item = dashNotifAllItems[i];
+      break;
+    }
+  }
+  if (!item) return;
+  var typeColors = {
+    'Information': '#06b6d4', 'Success': '#22c55e', 'Warning': '#f59e0b',
+    'Critical': '#ef4444', 'Approval': '#a855f7', 'Reminder': '#f97316', 'System': '#9498b8'
+  };
+  var notifType = item.NotificationType || 'Information';
+  var color = typeColors[notifType] || '#06b6d4';
+  var dt = item.CreatedDateTime || '';
+  var displayDate = dt ? new Date(dt).toLocaleString() : 'N/A';
+  var bodyHtml =
+    '<div style="display:flex;flex-direction:column;gap:14px">' +
+      '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Title</div><div style="font-size:14px;font-weight:600;color:var(--text)">' + escapeHtml(item.Title || '') + '</div></div>' +
+      '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Message</div><div style="font-size:13px;color:var(--text);line-height:1.5">' + escapeHtml(item.Message || item.Body || '') + '</div></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Date</div><div style="font-size:13px;color:var(--text)">' + displayDate + '</div></div>' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Severity</div><div><span class="badge" style="background:' + color + '20;color:' + color + ';padding:3px 8px;border-radius:4px;font-size:12px">' + escapeHtml(notifType) + '</span></div></div>' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Source</div><div style="font-size:13px;color:var(--text)">' + escapeHtml(item.Module || 'System') + '</div></div>' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Reference Number</div><div style="font-size:13px;color:var(--text)">' + escapeHtml(item.NotificationID || item.ReferenceNumber || 'N/A') + '</div></div>' +
+      '</div>' +
+    '</div>';
+  showDashDetailModal('Notification Details', bodyHtml, function() {
+    for (var j = 0; j < dashNotifAllItems.length; j++) {
+      if (dashNotifAllItems[j].NotificationID === id) {
+        dashNotifAllItems[j].ReadStatus = 'Read';
+        break;
+      }
+    }
+    updateDashNotifCounters();
+    renderDashboardNotifications();
+    if (typeof updateNotificationBadge === 'function') updateNotificationBadge();
+    google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).markNotificationRead(id);
+  });
 }
 
 function doDrawCharts(data) {
@@ -826,22 +956,28 @@ function drawDashboardCharts(data) {
 function loadDashboardRecentActivities() {
   google.script.run
     .withSuccessHandler(function(data) {
-      renderDashboardRecentActivities(data || []);
+      dashActivityAllItems = data || [];
+      renderDashboardRecentActivities();
     })
     .withFailureHandler(function() {
       var el = document.getElementById('dashboardRecentActivities');
       if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Failed to load</div>';
     })
-    .getRecentAuditLogs(10);
+    .getRecentAuditLogs(50);
 }
 
-function renderDashboardRecentActivities(items) {
+function renderDashboardRecentActivities() {
   var el = document.getElementById('dashboardRecentActivities');
   if (!el) return;
-  if (!items || items.length === 0) {
+  if (!dashActivityAllItems || dashActivityAllItems.length === 0) {
     el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">No recent activities</div>';
     return;
   }
+  var totalPages = Math.ceil(dashActivityAllItems.length / dashActivityPageSize);
+  if (dashActivityPage > totalPages) dashActivityPage = totalPages;
+  if (dashActivityPage < 1) dashActivityPage = 1;
+  var start = (dashActivityPage - 1) * dashActivityPageSize;
+  var pageItems = dashActivityAllItems.slice(start, start + dashActivityPageSize);
   var actionIcons = {
     'Login': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M9 3H5a2 2 0 00-2 2v10a2 2 0 002 2h4"/><polyline points="13 7 17 11 13 15"/><line x1="9" y1="11" x2="17" y2="11"/></svg>',
     'Logout': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><path d="M11 3H7a2 2 0 00-2 2v10a2 2 0 002 2h4"/><polyline points="17 7 13 11 17 15"/><line x1="13" y1="11" x2="5" y2="11"/></svg>',
@@ -857,7 +993,7 @@ function renderDashboardRecentActivities(items) {
     'Cancel': '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><line x1="15" y1="5" x2="5" y2="15"/></svg>'
   };
   var html = '<div style="display:flex;flex-direction:column;gap:4px">';
-  items.forEach(function(r) {
+  pageItems.forEach(function(r, idx) {
     var icon = actionIcons[r.Action] || '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle"><circle cx="10" cy="10" r="9"/><path d="M9 9h2v5"/><path d="M9 12h3"/></svg>';
     var dt = r.DateTime || '';
     var displayDt = '';
@@ -865,8 +1001,9 @@ function renderDashboardRecentActivities(items) {
       var d = new Date(dt);
       if (!isNaN(d.getTime()) && typeof getTimeAgo === 'function') displayDt = getTimeAgo(dt);
     }
+    var globalIdx = start + idx;
     html +=
-      '<div style="display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:var(--radius-sm);background:var(--bg-input);cursor:default" onclick="viewAuditLog(\'' + escapeHtml(r.AuditID) + '\')">' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:var(--radius-sm);background:var(--bg-input)">' +
         '<div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--primary-light);color:var(--primary);font-size:11px">' + icon + '</div>' +
         '<div style="flex:1;min-width:0">' +
           '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
@@ -877,10 +1014,52 @@ function renderDashboardRecentActivities(items) {
             escapeHtml(r.UserName || '') + ' &middot; ' + displayDt +
           '</div>' +
         '</div>' +
+        '<button class="btn btn-xs btn-primary" onclick="dashActivityView(' + globalIdx + ')" style="flex-shrink:0;font-size:10px;padding:3px 8px">View</button>' +
       '</div>';
   });
   html += '</div>';
+  if (totalPages > 1) {
+    html += '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:6px">';
+    html += '<button class="btn btn-xs btn-secondary" onclick="dashActivityGoPage(' + (dashActivityPage - 1) + ')"' + (dashActivityPage <= 1 ? ' disabled' : '') + '>Previous</button>';
+    html += '<span style="font-size:11px;color:var(--text-muted)">Page ' + dashActivityPage + ' of ' + totalPages + '</span>';
+    html += '<button class="btn btn-xs btn-secondary" onclick="dashActivityGoPage(' + (dashActivityPage + 1) + ')"' + (dashActivityPage >= totalPages ? ' disabled' : '') + '>Next</button>';
+    html += '</div>';
+  }
   el.innerHTML = html;
+}
+
+function dashActivityGoPage(p) {
+  dashActivityPage = p;
+  renderDashboardRecentActivities();
+}
+
+function dashActivityView(idx) {
+  var item = dashActivityAllItems[idx];
+  if (!item) return;
+  var actionColors = {
+    'Login': '#22c55e', 'Logout': '#94a3b8', 'Create': '#06b6d4', 'Update': '#f59e0b',
+    'Delete': '#ef4444', 'Approve': '#a855f7', 'Reject': '#ef4444', 'Open': '#3b82f6',
+    'Start': '#22c55e', 'Close': '#f97316', 'Complete': '#22c55e', 'Cancel': '#ef4444'
+  };
+  var action = item.Action || 'Unknown';
+  var color = actionColors[action] || '#94a3b8';
+  var dt = item.DateTime || '';
+  var displayDate = dt ? new Date(dt).toLocaleString() : 'N/A';
+  var bodyHtml =
+    '<div style="display:flex;flex-direction:column;gap:14px">' +
+      '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Action</div><div><span class="badge" style="background:' + color + '20;color:' + color + ';padding:3px 10px;border-radius:4px;font-size:13px;font-weight:600">' + escapeHtml(action) + '</span></div></div>' +
+      '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Module</div><div style="font-size:14px;font-weight:600;color:var(--text)">' + escapeHtml(item.Module || 'N/A') + '</div></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">User</div><div style="font-size:13px;color:var(--text)">' + escapeHtml(item.UserName || 'N/A') + '</div></div>' +
+        '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Date & Time</div><div style="font-size:13px;color:var(--text)">' + displayDate + '</div></div>' +
+      '</div>' +
+      (item.Description || item.Details ? '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Details</div><div style="font-size:13px;color:var(--text);line-height:1.5">' + escapeHtml(item.Description || item.Details || '') + '</div></div>' : '') +
+      '<div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Reference Number</div><div style="font-size:13px;color:var(--text)">' + escapeHtml(item.AuditID || item.ReferenceNumber || 'N/A') + '</div></div>' +
+    '</div>';
+  showDashDetailModal('Activity Details', bodyHtml, function() {
+    dashActivityAllItems.splice(idx, 1);
+    renderDashboardRecentActivities();
+  });
 }
 
 document.addEventListener('visibilitychange', function() {

@@ -203,7 +203,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
       jc = normalizeJobCard(jc);
 
       var status = (jc.CurrentStatus || jc.Status || '').toLowerCase();
-      var isClosed = (status === 'closed');
+      var isClosed = (status === 'closed' || status === 'approved');
       var isOpen = (status === 'open');
       var isReturned = (status === 'returned' || status === 'return');
       var isRunning = (status === 'running');
@@ -267,9 +267,11 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var criticalJobs = 0, highJobs = 0, mediumJobs = 0, lowJobs = 0;
     var deptJobCounts = {};
 
-    var closedJobCount = 0;
-    var closedWorkingMinutes = 0;
-    var bdBreakdownCount = 0;
+    var breakdownJobCount = 0;
+    var breakdownClosedCount = 0;
+    var breakdownClosedRepairMinutes = 0;
+    var breakdownMaintenanceCount = 0;
+    var preventiveMaintenanceCount = 0;
 
     for (var i = 0; i < filtered.length; i++) {
       var n = filtered[i];
@@ -293,12 +295,14 @@ function getDashboardData(filter, userDepartment, userEmail) {
       deptJobCounts[n.dept] = (deptJobCounts[n.dept] || 0) + 1;
 
       if (n.isClosed) {
-        closedJobCount++;
-        closedWorkingMinutes += n.workingMins;
-        if (n.hasBreakdownType) {
-          bdBreakdownCount++;
-        }
+        breakdownJobCount++;
+        breakdownClosedCount++;
+        breakdownClosedRepairMinutes += n.repairMins;
       }
+
+      var bdType = (n.raw.BreakdownType || '').toLowerCase();
+      if (bdType === 'breakdown maintenance') breakdownMaintenanceCount++;
+      else if (bdType === 'preventive maintenance') preventiveMaintenanceCount++;
     }
 
     var effectiveMachines = totalMachines > 0 ? totalMachines : 1;
@@ -314,118 +318,12 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var totalWorkingHours = totalWorkingMinutes / 60;
     var totalWaitingHours = totalWaitingMinutes / 60;
 
-    var mttr = closedJobCount > 0 ? Math.round((closedWorkingMinutes / closedJobCount / 60) * 100) / 100 : null;
+    var mttr = breakdownClosedCount > 0 ? Math.round((breakdownClosedRepairMinutes / breakdownClosedCount / 60) * 100) / 100 : null;
 
-    var closedCards = [];
-    for (var ci = 0; ci < filtered.length; ci++) {
-      if (filtered[ci].isClosed && filtered[ci].closeDate) {
-        var cdt = new Date(filtered[ci].closeDate);
-        if (!isNaN(cdt.getTime())) {
-          closedCards.push({ closeDate: cdt, workingMins: filtered[ci].workingMins });
-        }
-      }
-    }
-    closedCards.sort(function(a, b) { return a.closeDate - b.closeDate; });
-    var mtbfIntervals = [];
-    for (var ci2 = 1; ci2 < closedCards.length; ci2++) {
-      var diffMs = closedCards[ci2].closeDate.getTime() - closedCards[ci2 - 1].closeDate.getTime();
-      var diffHours = diffMs / 3600000;
-      if (diffHours > 0) mtbfIntervals.push(diffHours);
-    }
-    var mtbf = closedCards.length >= 2 && mtbfIntervals.length > 0 ? Math.round((mtbfIntervals.reduce(function(a, b) { return a + b; }, 0) / mtbfIntervals.length) * 100) / 100 : null;
+    var totalRunningHours = Math.max(0, rangeHours - totalDowntimeHours);
+    var mtbf = breakdownJobCount > 0 ? Math.round((totalRunningHours / breakdownJobCount) * 100) / 100 : null;
 
-    if (mttr === null || mtbf === null) {
-      if (rawJobCards.length > 0) {
-        var _h = Object.keys(rawJobCards[0]);
-        var _sf = null;
-        for (var _hi = 0; _hi < _h.length; _hi++) {
-          var _hl = _h[_hi].toLowerCase().trim();
-          if (_hl === 'currentstatus' || _hl === 'status') { _sf = _h[_hi]; break; }
-        }
-        if (!_sf) {
-          for (var _hi = 0; _hi < _h.length; _hi++) {
-            if (_h[_hi].toLowerCase().indexOf('status') !== -1) { _sf = _h[_hi]; break; }
-          }
-        }
-        var _cdf = null;
-        for (var _hi = 0; _hi < _h.length; _hi++) {
-          var _hl = _h[_hi].toLowerCase().trim();
-          if (_hl === 'closedatetime' || (_hl.indexOf('close') !== -1 && _hl.indexOf('date') !== -1)) { _cdf = _h[_hi]; break; }
-        }
-        var _wtf = null;
-        for (var _hi = 0; _hi < _h.length; _hi++) {
-          var _hl = _h[_hi].toLowerCase().trim();
-          if (_hl === 'workingtime' || (_hl.indexOf('working') !== -1 && _hl.indexOf('time') !== -1)) { _wtf = _h[_hi]; break; }
-        }
-        var _vd = {};
-        for (var _ri = 0; _ri < rawJobCards.length; _ri++) {
-          var _sv = (_sf ? (rawJobCards[_ri][_sf] || '') : '').toString().trim().toLowerCase();
-          if (_sv) _vd[_sv] = (_vd[_sv] || 0) + 1;
-        }
-        var _cl = ['closed', 'completed', 'done', 'finished', 'resolved', 'close'];
-        var _cv = null;
-        for (var _ai = 0; _ai < _cl.length; _ai++) {
-          if (_vd[_cl[_ai]]) { _cv = _cl[_ai]; break; }
-        }
-        if (!_cv) {
-          var _vk = Object.keys(_vd);
-          for (var _vi = 0; _vi < _vk.length; _vi++) {
-            if (_vk[_vi].indexOf('close') !== -1 || _vk[_vi].indexOf('complet') !== -1) { _cv = _vk[_vi]; break; }
-          }
-        }
-        console.log('[MTTR/MTBF AUTO-DETECT] statusField=' + _sf + ' closedValue=' + _cv + ' closeDateField=' + _cdf + ' workTimeField=' + _wtf + ' allStatusValues=' + JSON.stringify(_vd));
-        if (_sf && _cv) {
-          if (mttr === null) {
-            var _ac = 0, _aw = 0;
-            for (var _fi = 0; _fi < filtered.length; _fi++) {
-              var _fs = (filtered[_fi].raw[_sf] || '').toString().trim().toLowerCase();
-              if (_fs === _cv) {
-                _ac++;
-                _aw += _wtf ? resolveMinutes(filtered[_fi].raw, _wtf) : filtered[_fi].workingMins;
-              }
-            }
-            if (_ac > 0) {
-              closedJobCount = _ac;
-              closedWorkingMinutes = _aw;
-              mttr = Math.round((_aw / _ac / 60) * 100) / 100;
-              console.log('[MTTR/MTBF AUTO-DETECT] MTTR fixed: ' + mttr + ' hrs (count=' + _ac + ', workMins=' + _aw + ')');
-            }
-          }
-          if (mtbf === null) {
-            var _cc = [];
-            for (var _fi = 0; _fi < filtered.length; _fi++) {
-              var _fs = (filtered[_fi].raw[_sf] || '').toString().trim().toLowerCase();
-              if (_fs === _cv) {
-                var _cd = filtered[_fi].raw[_cdf] || filtered[_fi].closeDate || '';
-                var _cdt = new Date(_cd);
-                if (!isNaN(_cdt.getTime())) {
-                  _cc.push({ closeDate: _cdt, workingMins: _wtf ? resolveMinutes(filtered[_fi].raw, _wtf) : filtered[_fi].workingMins });
-                }
-              }
-            }
-            _cc.sort(function(a, b) { return a.closeDate - b.closeDate; });
-            var _mi = [];
-            for (var _ci = 1; _ci < _cc.length; _ci++) {
-              var _dm = _cc[_ci].closeDate.getTime() - _cc[_ci - 1].closeDate.getTime();
-              var _dh = _dm / 3600000;
-              if (_dh > 0) _mi.push(_dh);
-            }
-            if (_cc.length >= 2 && _mi.length > 0) {
-              closedCards = _cc;
-              mtbfIntervals = _mi;
-              mtbf = Math.round((_mi.reduce(function(a, b) { return a + b; }, 0) / _mi.length) * 100) / 100;
-              console.log('[MTTR/MTBF AUTO-DETECT] MTBF fixed: ' + mtbf + ' hrs (cards=' + _cc.length + ', intervals=' + _mi.length + ')');
-            } else {
-              console.log('[MTTR/MTBF AUTO-DETECT] MTBF still N/A (cards=' + _cc.length + ', intervals=' + _mi.length + ')');
-            }
-          }
-        } else {
-          console.log('[MTTR/MTBF AUTO-DETECT] Could not determine status field or closed value');
-        }
-      }
-    }
-
-    var availability = (mtbf !== null && mttr !== null && (mtbf + mttr) > 0) ? Math.round((mtbf / (mtbf + mttr)) * 10000) / 100 : 0;
+    var availability = (totalWorkingMinutes + totalDowntimeMinutes) > 0 ? Math.round((totalWorkingMinutes / (totalWorkingMinutes + totalDowntimeMinutes)) * 10000) / 100 : 0;
 
     var pmDue = 0, pmOverdue = 0, pmCompleted = 0, pmScheduled = 0, pmInProgress = 0, pmMissed = 0, pmSkipped = 0;
     pms.forEach(function(pm) {
@@ -480,6 +378,7 @@ function getDashboardData(filter, userDepartment, userEmail) {
     var chartBreakdowns = [], chartMttr = [], chartMtbf = [];
     var chartWaitingTime = [], chartDowntime = [], chartWorkingTime = [];
     var chartMonthlyMaint = [];
+    var chartBreakdownMaint = [], chartPreventiveMaint = [];
 
     for (var p = 0; p < numPeriods; p++) {
       var pStart = new Date(chartRangeStart.getTime() + p * periodMs);
@@ -492,8 +391,11 @@ function getDashboardData(filter, userDepartment, userEmail) {
 
       var co = 0, cr = 0, cc = 0, cp = 0, ca = 0;
       var periodWaitMins = 0, periodDownMins = 0, periodWorkMins = 0;
-      var periodClosedCount = 0;
-      var periodClosedCloseDates = [];
+      var periodBreakdownCount = 0;
+      var periodBreakdownClosedCount = 0;
+      var periodBreakdownRepairMins = 0;
+      var periodBreakdownMaintCount = 0;
+      var periodPreventiveMaintCount = 0;
 
       for (var j = 0; j < filtered.length; j++) {
         var n = filtered[j];
@@ -508,21 +410,20 @@ function getDashboardData(filter, userDepartment, userEmail) {
           else if (n.isClosed) cc++;
           else if (n.isPending) cp++;
           else if (n.isApproved) ca++;
-        }
 
-        if (n.isClosed && n.closeDate) {
-          var closeInPeriod = (function() {
-            var cdt = new Date(n.closeDate);
-            return !isNaN(cdt.getTime()) && cdt >= pStart && cdt < pEnd;
-          })();
-          if (closeInPeriod) {
-            periodClosedCount++;
-            periodWaitMins += n.waitingMins;
-            periodWorkMins += n.workingMins;
-            periodDownMins += n.downtimeMins;
-            var closeDt = new Date(n.closeDate);
-            if (!isNaN(closeDt.getTime())) periodClosedCloseDates.push(closeDt);
+          periodWaitMins += n.waitingMins;
+          periodWorkMins += n.workingMins;
+          periodDownMins += n.downtimeMins;
+
+          if (n.isClosed) {
+            periodBreakdownCount++;
+            periodBreakdownClosedCount++;
+            periodBreakdownRepairMins += n.repairMins;
           }
+
+          var bdType = (n.raw.BreakdownType || '').toLowerCase();
+          if (bdType === 'breakdown maintenance') periodBreakdownMaintCount++;
+          else if (bdType === 'preventive maintenance') periodPreventiveMaintCount++;
         }
       }
 
@@ -532,24 +433,22 @@ function getDashboardData(filter, userDepartment, userEmail) {
       chartPending.push(cp);
       chartApproved.push(ca);
 
-      chartBreakdowns.push(Math.round(periodDownMins / 60 * 100) / 100);
+      chartBreakdowns.push(periodBreakdownCount);
       chartWaitingTime.push(Math.round(periodWaitMins / 60 * 100) / 100);
       chartDowntime.push(Math.round(periodDownMins / 60 * 100) / 100);
       chartWorkingTime.push(Math.round(periodWorkMins / 60 * 100) / 100);
 
-      var monthMttrVal = periodClosedCount > 0 ? Math.round((periodWorkMins / periodClosedCount / 60) * 100) / 100 : null;
+      var monthMttrVal = periodBreakdownClosedCount > 0 ? Math.round((periodBreakdownRepairMins / periodBreakdownClosedCount / 60) * 100) / 100 : null;
 
-      periodClosedCloseDates.sort(function(a, b) { return a - b; });
-      var periodMtbfIntervals = [];
-      for (var ci3 = 1; ci3 < periodClosedCloseDates.length; ci3++) {
-        var intDiff = (periodClosedCloseDates[ci3].getTime() - periodClosedCloseDates[ci3 - 1].getTime()) / 3600000;
-        if (intDiff > 0) periodMtbfIntervals.push(intDiff);
-      }
-      var monthMtbfVal = periodMtbfIntervals.length > 0 ? Math.round((periodMtbfIntervals.reduce(function(a, b) { return a + b; }, 0) / periodMtbfIntervals.length) * 100) / 100 : null;
+      var periodDowntimeHours = periodDownMins / 60;
+      var periodUptimeHours = Math.max(0, (periodMs / 3600000) - periodDowntimeHours);
+      var monthMtbfVal = periodBreakdownCount > 0 ? Math.round((periodUptimeHours / periodBreakdownCount) * 100) / 100 : null;
 
       chartMttr.push(monthMttrVal);
       chartMtbf.push(monthMtbfVal);
       chartMonthlyMaint.push(co + cr + cc + cp + ca);
+      chartBreakdownMaint.push(periodBreakdownMaintCount);
+      chartPreventiveMaint.push(periodPreventiveMaintCount);
     }
 
     var mttrValues = chartMttr.filter(function(v) { return v !== null && v > 0; });
@@ -576,14 +475,15 @@ function getDashboardData(filter, userDepartment, userEmail) {
     console.log('Total JobCards in sheet: ' + rawJobCards.length);
     console.log('Filtered JobCards (' + (filter || 'all') + '): ' + filteredJobCount);
     console.log('Status: Open=' + openJobs + ' Running=' + runningJobs + ' Closed=' + closedJobs + ' PendingApproval=' + pendingApprovalJobs + ' Approved=' + approvedJobs + ' Waiting=' + waitingJobs);
-    console.log('ClosedJobCount=' + closedJobCount + ' BdBreakdownCount=' + bdBreakdownCount);
-    console.log('ClosedWorkingMinutes=' + closedWorkingMinutes + ' min  (' + durationToDisplay(closedWorkingMinutes) + ')');
+    console.log('BreakdownJobCount=' + breakdownJobCount + ' BreakdownClosedCount=' + breakdownClosedCount);
+    console.log('BreakdownMaintenanceCount=' + breakdownMaintenanceCount + ' PreventiveMaintenanceCount=' + preventiveMaintenanceCount);
+    console.log('BreakdownClosedRepairMinutes=' + breakdownClosedRepairMinutes + ' min  (' + durationToDisplay(breakdownClosedRepairMinutes) + ')');
     console.log('SUM WaitingTime  = ' + totalWaitingMinutes + ' min  (' + durationToDisplay(totalWaitingMinutes) + ')');
     console.log('SUM WorkingTime  = ' + totalWorkingMinutes + ' min  (' + durationToDisplay(totalWorkingMinutes) + ')');
     console.log('SUM RepairTime   = ' + totalRepairMinutes + ' min  (' + durationToDisplay(totalRepairMinutes) + ')');
     console.log('SUM Downtime     = ' + totalDowntimeMinutes + ' min  (' + durationToDisplay(totalDowntimeMinutes) + ')');
-    console.log('MTTR = ' + (mttr !== null ? mttr + ' hrs' : 'N/A') + ' (closedJobCount=' + closedJobCount + ', closedWorkingMinutes=' + closedWorkingMinutes + ')');
-    console.log('MTBF = ' + (mtbf !== null ? mtbf + ' hrs' : 'N/A') + ' (closedCards=' + closedCards.length + ', intervals=' + mtbfIntervals.length + ')');
+    console.log('MTTR = ' + (mttr !== null ? mttr + ' hrs' : 'N/A') + ' (breakdownClosedCount=' + breakdownClosedCount + ', repairMins=' + breakdownClosedRepairMinutes + ')');
+    console.log('MTBF = ' + (mtbf !== null ? mtbf + ' hrs' : 'N/A') + ' (breakdownJobCount=' + breakdownJobCount + ', runningHours=' + totalRunningHours + ')');
     console.log('Availability = ' + availability + '%');
     if (totalWaitingMinutes === 0 && filteredJobCount > 0) {
       console.log('[DASHBOARD WARNING] WaitingTime SUM is 0 but there are ' + filteredJobCount + ' filtered records.');
@@ -615,20 +515,12 @@ function getDashboardData(filter, userDepartment, userEmail) {
           ' normalized=' + fd.raw.Downtime);
       }
     }
-    if (closedJobCount === 0 && filteredJobCount > 0) {
-      console.log('[DASHBOARD WARNING] No closed job cards found. MTTR=N/A, MTBF=N/A, Availability=0%.');
-      console.log('  Filtered cards by status:');
-      for (var di = 0; di < filtered.length && di < 5; di++) {
-        console.log('  Record ' + di + ': ' + (filtered[di].raw.JobCardNo || 'N/A') + ' CurrentStatus=' + JSON.stringify(filtered[di].raw.CurrentStatus));
-      }
+    if (breakdownJobCount === 0 && filteredJobCount > 0) {
+      console.log('[DASHBOARD INFO] No breakdown job cards found. MTTR=N/A, MTBF=N/A.');
     }
-    if (mttr === 0 && closedJobCount > 0) {
-      console.log('[DASHBOARD WARNING] MTTR=0 but ' + closedJobCount + ' closed cards exist.');
-      console.log('  closedWorkingMinutes=' + closedWorkingMinutes + '. All closed cards have WorkingTime=0.');
-    }
-    if (mtbf === null && closedCards.length >= 2) {
-      console.log('[DASHBOARD WARNING] MTBF=null but ' + closedCards.length + ' closed cards with CloseDateTime exist.');
-      console.log('  All intervals between consecutive CloseDateTime are <= 0.');
+    if (mttr === 0 && breakdownClosedCount > 0) {
+      console.log('[DASHBOARD WARNING] MTTR=0 but ' + breakdownClosedCount + ' closed breakdown cards exist.');
+      console.log('  breakdownClosedRepairMinutes=' + breakdownClosedRepairMinutes + '. All closed breakdown cards have repairMins=0.');
     }
     console.log('=================================');
     console.log('');
@@ -659,6 +551,10 @@ function getDashboardData(filter, userDepartment, userEmail) {
       totalRepairTimeMinutes: totalRepairMinutes,
       totalDowntimeMinutes: totalDowntimeMinutes,
       breakdownHours: Math.round(totalDowntimeHours * 100) / 100,
+      breakdownJobCount: breakdownJobCount,
+      breakdownClosedCount: breakdownClosedCount,
+      breakdownMaintenanceCount: breakdownMaintenanceCount,
+      preventiveMaintenanceCount: preventiveMaintenanceCount,
       mttr: mttr,
       mtbf: mtbf,
       availability: availability,
@@ -694,7 +590,9 @@ function getDashboardData(filter, userDepartment, userEmail) {
         downtime: chartDowntime,
         workingTime: chartWorkingTime,
         monthlyMaintenance: chartMonthlyMaint,
-        departmentJobs: deptJobCounts
+        departmentJobs: deptJobCounts,
+        breakdownMaint: chartBreakdownMaint,
+        preventiveMaint: chartPreventiveMaint
       },
       _debug: {
         sheetLoaded: rawJobCards.length > 0,
